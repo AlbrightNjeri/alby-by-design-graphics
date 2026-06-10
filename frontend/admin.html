@@ -1,0 +1,1412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A×D Admin Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Montserrat:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --gold:#E0A53B;
+  --gold-dim:#C48B28;
+  --gold-glow:rgba(224,165,59,0.15);
+  --bg:#0A0A0A;
+  --surface:#161616;
+  --surface2:#1E1E1E;
+  --surface3:#242424;
+  --text:#FFFFFF;
+  --text2:#BDBDBD;
+  --text3:#7A7A7A;
+  --border:rgba(255,255,255,0.08);
+  --border-gold:rgba(224,165,59,0.3);
+  --red:#E05353;
+  --green:#53E09A;
+  --radius:12px;
+  --transition:0.3s cubic-bezier(0.4,0,0.2,1);
+}
+html{font-size:16px}
+body{background:var(--bg);color:var(--text);font-family:'Montserrat',sans-serif;min-height:100vh;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:'Poppins',sans-serif;line-height:1.2}
+a{color:inherit;text-decoration:none}
+button{cursor:pointer;border:none;font-family:inherit}
+input,select,textarea{font-family:inherit}
+img{max-width:100%;display:block}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--gold)}
+
+/* ── LAYOUT ── */
+#app{display:flex;min-height:100vh}
+
+/* ── SIDEBAR ── */
+#sidebar{
+  width:240px;flex-shrink:0;
+  background:var(--surface);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  position:fixed;top:0;left:0;height:100vh;
+  z-index:100;
+}
+.sidebar-logo{
+  padding:1.5rem;
+  display:flex;align-items:center;gap:0.6rem;
+  border-bottom:1px solid var(--border);
+}
+.logo-mark{
+  width:36px;height:36px;background:var(--gold);
+  border-radius:8px;display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:0.9rem;color:#0A0A0A;font-family:'Poppins',sans-serif;flex-shrink:0;
+}
+.sidebar-logo span{font-family:'Poppins',sans-serif;font-weight:700;font-size:1.1rem}
+.sidebar-logo span em{color:var(--gold);font-style:normal}
+.sidebar-nav{padding:1rem 0;flex:1}
+.nav-item{
+  display:flex;align-items:center;gap:0.75rem;
+  padding:0.75rem 1.5rem;
+  color:var(--text3);font-size:0.9rem;font-weight:500;
+  cursor:pointer;transition:all var(--transition);
+  border-left:2px solid transparent;
+}
+.nav-item:hover{color:var(--text2);background:rgba(255,255,255,0.03)}
+.nav-item.active{color:var(--gold);border-left-color:var(--gold);background:var(--gold-glow)}
+.nav-item svg{flex-shrink:0;opacity:0.7}
+.nav-item.active svg{opacity:1}
+.sidebar-footer{
+  padding:1.25rem 1.5rem;
+  border-top:1px solid var(--border);
+  font-size:0.8rem;color:var(--text3);
+}
+.sidebar-footer strong{display:block;color:var(--text2);margin-bottom:0.15rem}
+#logout-btn{
+  margin-top:0.75rem;width:100%;padding:0.5rem;
+  background:rgba(224,83,83,0.1);color:var(--red);
+  border:1px solid rgba(224,83,83,0.2);border-radius:8px;
+  font-size:0.8rem;font-weight:500;transition:all var(--transition);
+}
+#logout-btn:hover{background:rgba(224,83,83,0.2)}
+
+/* ── MAIN ── */
+#main{margin-left:240px;flex:1;min-height:100vh}
+.topbar{
+  padding:1.25rem 2rem;
+  border-bottom:1px solid var(--border);
+  background:rgba(10,10,10,0.8);
+  backdrop-filter:blur(20px);
+  position:sticky;top:0;z-index:50;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.topbar h2{font-size:1.1rem;font-weight:600}
+.topbar-badge{
+  font-size:0.75rem;padding:0.3rem 0.75rem;
+  background:var(--gold-glow);color:var(--gold);
+  border:1px solid var(--border-gold);border-radius:20px;
+}
+.page-content{padding:2rem;max-width:1100px}
+.page{display:none}
+.page.active{display:block}
+
+/* ── LOGIN SCREEN ── */
+#login-screen{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:var(--bg);
+}
+.login-box{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:20px;padding:2.5rem;width:100%;max-width:420px;
+}
+.login-logo{display:flex;align-items:center;gap:0.6rem;margin-bottom:2rem}
+.login-logo span{font-family:'Poppins',sans-serif;font-weight:700;font-size:1.2rem}
+.login-logo span em{color:var(--gold);font-style:normal}
+.login-box h1{font-size:1.5rem;margin-bottom:0.4rem}
+.login-box p{color:var(--text3);font-size:0.875rem;margin-bottom:2rem}
+#login-error{
+  background:rgba(224,83,83,0.1);border:1px solid rgba(224,83,83,0.3);
+  color:var(--red);border-radius:8px;padding:0.75rem 1rem;
+  font-size:0.85rem;margin-bottom:1rem;display:none;
+}
+
+/* ── FORM ELEMENTS ── */
+.form-group{margin-bottom:1.25rem}
+.form-group label{display:block;font-size:0.8rem;color:var(--text3);margin-bottom:0.5rem;font-weight:500;letter-spacing:0.03em;text-transform:uppercase}
+.form-group input,
+.form-group select,
+.form-group textarea{
+  width:100%;background:var(--surface2);
+  border:1px solid var(--border);border-radius:10px;
+  padding:0.75rem 1rem;color:var(--text);font-size:0.9rem;
+  transition:border-color var(--transition);outline:none;
+}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus{border-color:var(--border-gold)}
+.form-group textarea{resize:vertical;min-height:100px}
+.form-group select option{background:var(--surface2)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+
+/* ── BUTTONS ── */
+.btn-primary{
+  background:var(--gold);color:#0A0A0A;
+  padding:0.75rem 1.5rem;border-radius:10px;
+  font-weight:600;font-size:0.9rem;font-family:'Poppins',sans-serif;
+  transition:all var(--transition);display:inline-flex;align-items:center;gap:0.5rem;
+}
+.btn-primary:hover{background:var(--gold-dim);transform:translateY(-1px)}
+.btn-primary:disabled{opacity:0.5;cursor:not-allowed;transform:none}
+.btn-secondary{
+  background:transparent;color:var(--text2);
+  padding:0.7rem 1.25rem;border-radius:10px;
+  font-weight:500;font-size:0.875rem;
+  border:1px solid var(--border);transition:all var(--transition);
+  display:inline-flex;align-items:center;gap:0.5rem;
+}
+.btn-secondary:hover{border-color:var(--border-gold);color:var(--gold)}
+.btn-danger{
+  background:rgba(224,83,83,0.1);color:var(--red);
+  padding:0.5rem 0.875rem;border-radius:8px;
+  font-weight:500;font-size:0.8rem;
+  border:1px solid rgba(224,83,83,0.2);transition:all var(--transition);
+}
+.btn-danger:hover{background:rgba(224,83,83,0.2)}
+.btn-sm{padding:0.45rem 0.875rem;font-size:0.8rem}
+
+/* ── CARDS / STATS ── */
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:2rem}
+.stat-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:1.25rem 1.5rem;
+}
+.stat-card .num{font-family:'Poppins',sans-serif;font-size:2rem;font-weight:700;color:var(--gold)}
+.stat-card .label{font-size:0.8rem;color:var(--text3);margin-top:0.25rem}
+
+/* ── SECTION HEADER ── */
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem}
+.section-header h3{font-size:1.1rem;font-weight:600}
+
+/* ── PROJECT GRID ── */
+.projects-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem}
+.project-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);overflow:hidden;
+  transition:border-color var(--transition);
+}
+.project-card:hover{border-color:var(--border-gold)}
+.project-card-img{
+  width:100%;height:160px;object-fit:cover;
+  background:var(--surface2);display:flex;align-items:center;justify-content:center;
+  color:var(--text3);font-size:0.8rem;
+}
+.project-card-img img{width:100%;height:160px;object-fit:cover}
+.project-card-body{padding:1rem}
+.project-card-tag{
+  font-size:0.7rem;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;
+  color:var(--gold);margin-bottom:0.4rem;
+}
+.project-card-title{font-family:'Poppins',sans-serif;font-weight:600;font-size:0.95rem;margin-bottom:0.75rem}
+.project-card-actions{display:flex;gap:0.5rem}
+.badge-featured{
+  display:inline-block;font-size:0.65rem;font-weight:600;
+  background:var(--gold-glow);color:var(--gold);
+  border:1px solid var(--border-gold);border-radius:20px;
+  padding:0.15rem 0.5rem;margin-left:0.5rem;vertical-align:middle;
+}
+
+/* ── UPLOAD ZONE ── */
+.upload-zone{
+  border:2px dashed var(--border);border-radius:var(--radius);
+  padding:2rem;text-align:center;cursor:pointer;
+  transition:all var(--transition);background:var(--surface2);
+  position:relative;
+}
+.upload-zone:hover,.upload-zone.dragover{border-color:var(--gold);background:var(--gold-glow)}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.upload-zone svg{margin:0 auto 0.75rem;opacity:0.4}
+.upload-zone p{color:var(--text3);font-size:0.875rem}
+.upload-zone strong{color:var(--gold)}
+.upload-preview{
+  margin-top:1rem;border-radius:10px;overflow:hidden;
+  border:1px solid var(--border);max-height:200px;
+}
+.upload-preview img{width:100%;max-height:200px;object-fit:cover}
+.upload-progress{
+  margin-top:0.75rem;background:var(--surface3);
+  border-radius:4px;height:4px;overflow:hidden;display:none;
+}
+.upload-progress-bar{height:100%;background:var(--gold);width:0;transition:width 0.3s}
+
+/* ── INQUIRIES TABLE ── */
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+table{width:100%;border-collapse:collapse}
+thead{background:var(--surface2)}
+th{padding:0.875rem 1rem;text-align:left;font-size:0.75rem;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;color:var(--text3)}
+td{padding:0.875rem 1rem;font-size:0.875rem;border-top:1px solid var(--border)}
+tr:hover td{background:rgba(255,255,255,0.02)}
+.status-badge{
+  display:inline-block;font-size:0.7rem;font-weight:600;
+  padding:0.2rem 0.6rem;border-radius:20px;
+}
+.status-new{background:rgba(224,165,59,0.15);color:var(--gold)}
+.status-contacted{background:rgba(83,224,154,0.12);color:var(--green)}
+.status-closed{background:rgba(255,255,255,0.06);color:var(--text3)}
+.inquiry-msg{max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text3)}
+
+/* ── MODAL ── */
+.modal-backdrop{
+  position:fixed;inset:0;background:rgba(0,0,0,0.8);
+  z-index:1000;display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity var(--transition);
+  backdrop-filter:blur(4px);
+}
+.modal-backdrop.open{opacity:1;pointer-events:all}
+.modal{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:20px;width:100%;max-width:560px;max-height:90vh;
+  overflow-y:auto;padding:2rem;position:relative;
+  transform:translateY(20px);transition:transform var(--transition);
+}
+.modal-backdrop.open .modal{transform:translateY(0)}
+.modal-close{
+  position:absolute;top:1rem;right:1rem;
+  width:32px;height:32px;border-radius:50%;
+  background:var(--surface2);color:var(--text3);
+  font-size:1.1rem;display:flex;align-items:center;justify-content:center;
+  transition:all var(--transition);
+}
+.modal-close:hover{background:var(--surface3);color:var(--text)}
+.modal h3{font-size:1.2rem;margin-bottom:1.5rem}
+
+/* ── TOAST ── */
+#toast{
+  position:fixed;bottom:2rem;right:2rem;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;padding:0.875rem 1.25rem;
+  font-size:0.875rem;font-weight:500;
+  transform:translateY(100px);opacity:0;
+  transition:all var(--transition);z-index:9999;
+  display:flex;align-items:center;gap:0.625rem;max-width:320px;
+}
+#toast.show{transform:translateY(0);opacity:1}
+#toast.success{border-color:rgba(83,224,154,0.3);color:var(--green)}
+#toast.error{border-color:rgba(224,83,83,0.3);color:var(--red)}
+
+/* ── EMPTY STATE ── */
+.empty{text-align:center;padding:3rem;color:var(--text3)}
+.empty svg{margin:0 auto 1rem;opacity:0.3}
+.empty p{font-size:0.9rem}
+
+/* ── DIVIDER ── */
+.divider{height:1px;background:var(--border);margin:2rem 0}
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="logo-mark">A×D</div>
+      <span>Alby by <em>Design</em></span>
+    </div>
+    <h1>Admin Panel</h1>
+    <p>Sign in to manage your portfolio and inquiries.</p>
+    <div id="login-error"></div>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="login-email" placeholder="albrightnjeri@gmail.com" autocomplete="email">
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn-primary" id="login-btn" style="width:100%;justify-content:center" onclick="doLogin()">
+      Sign In
+    </button>
+  </div>
+</div>
+
+<!-- ADMIN APP -->
+<div id="app" style="display:none">
+  <!-- Sidebar -->
+  <aside id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">A×D</div>
+      <span>Alby by <em>Design</em></span>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-item active" onclick="showPage('dashboard',this)">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </div>
+      <div class="nav-item" onclick="showPage('projects',this)">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+        Projects
+      </div>
+      <div class="nav-item" onclick="showPage('add-project',this)">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+        Add Project
+      </div>
+      <div class="nav-item" onclick="showPage('inquiries',this)">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Inquiries
+        <span id="inquiry-count" style="margin-left:auto;background:var(--gold);color:#0A0A0A;font-size:0.65rem;font-weight:700;padding:0.1rem 0.4rem;border-radius:20px;display:none"></span>
+      </div>
+      <div class="nav-item" onclick="showPage('about-me',this)">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        About Me
+      </div>
+      <div class="nav-item" onclick="showPage('logo',this)">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a4 4 0 0 1 8 0v2"/></svg>
+        Logo
+      </div>
+      <div class="nav-item" onclick="showPage('testimonials',this)">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 10h.01M12 10h.01M16 10h.01"/></svg>
+        Testimonials
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <strong id="admin-email-display">admin</strong>
+      Alby by Design Graphics
+      <button id="logout-btn" onclick="doLogout()">Sign Out</button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div id="main">
+    <div class="topbar">
+      <h2 id="page-title">Dashboard</h2>
+      <span class="topbar-badge">Admin</span>
+    </div>
+    <div class="page-content">
+
+      <!-- DASHBOARD -->
+      <div class="page active" id="page-dashboard">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="num" id="stat-projects">—</div>
+            <div class="label">Total Projects</div>
+          </div>
+          <div class="stat-card">
+            <div class="num" id="stat-inquiries">—</div>
+            <div class="label">Total Inquiries</div>
+          </div>
+          <div class="stat-card">
+            <div class="num" id="stat-new">—</div>
+            <div class="label">New Inquiries</div>
+          </div>
+        </div>
+        <div class="section-header">
+          <h3>Recent Inquiries</h3>
+          <button class="btn-secondary btn-sm" onclick="showPage('inquiries', document.querySelector('[onclick*=inquiries]'))">View All</button>
+        </div>
+        <div id="recent-inquiries-list"></div>
+      </div>
+
+      <!-- PROJECTS LIST -->
+      <div class="page" id="page-projects">
+        <div class="section-header">
+          <h3>All Projects</h3>
+          <button class="btn-primary btn-sm" onclick="showPage('add-project', document.querySelectorAll('.nav-item')[2])">+ Add Project</button>
+        </div>
+        <div class="projects-grid" id="projects-grid"></div>
+      </div>
+
+      <!-- ADD / EDIT PROJECT -->
+      <div class="page" id="page-add-project">
+        <div class="section-header">
+          <h3 id="project-form-title">Add New Project</h3>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.75rem;max-width:640px">
+          <input type="hidden" id="edit-project-id">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Project Title *</label>
+              <input type="text" id="proj-title" placeholder="e.g. Glow Skincare Co.">
+            </div>
+            <div class="form-group">
+              <label>Category</label>
+              <select id="proj-category">
+                <option value="">Select category</option>
+                <option value="branding">Brand Identity</option>
+                <option value="logos">Logo Design</option>
+                <option value="social">Social Media</option>
+                <option value="posters">Poster Design</option>
+                <option value="flyers">Flyer Design</option>
+                <option value="marketing">Marketing Materials</option>
+                <option value="motion">Motion Graphics</option>
+                <option value="video">Video Production</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <textarea id="proj-description" placeholder="Describe the project, challenge, and outcome..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>Project Image</label>
+            <div class="upload-zone" id="upload-zone">
+              <input type="file" id="image-file" accept="image/jpeg,image/png,image/webp" onchange="handleFileSelect(this)">
+              <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <p><strong>Click to upload</strong> or drag and drop</p>
+              <p style="font-size:0.75rem;margin-top:0.25rem">JPG, PNG, WEBP up to 10MB</p>
+            </div>
+            <div class="upload-progress" id="upload-progress"><div class="upload-progress-bar" id="upload-bar"></div></div>
+            <div class="upload-preview" id="upload-preview" style="display:none"></div>
+            <input type="hidden" id="proj-image-url">
+            <div id="upload-status" style="font-size:0.8rem;margin-top:0.5rem;color:var(--text3)"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Client / Brand Name</label>
+              <input type="text" id="proj-client" placeholder="e.g. Glow Skincare Co.">
+            </div>
+            <div class="form-group">
+              <label>Project Year</label>
+              <input type="text" id="proj-year" placeholder="e.g. 2024" maxlength="4">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Deliverables <span style="color:var(--text3);font-size:0.75rem;text-transform:none;font-weight:400">(comma-separated)</span></label>
+            <input type="text" id="proj-deliverables" placeholder="e.g. Logo Design, Brand Guidelines, Social Media Templates">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Project URL (optional)</label>
+              <input type="url" id="proj-url" placeholder="https://...">
+            </div>
+            <div class="form-group">
+              <label>Video URL (optional)</label>
+              <input type="url" id="proj-video" placeholder="YouTube / Vimeo URL">
+            </div>
+          </div>
+          <div class="form-group" style="display:flex;align-items:center;gap:0.75rem">
+            <input type="checkbox" id="proj-featured" style="width:auto;accent-color:var(--gold)">
+            <label for="proj-featured" style="text-transform:none;font-size:0.875rem;color:var(--text2);cursor:pointer">Mark as featured project</label>
+          </div>
+          <div style="display:flex;gap:0.75rem;margin-top:0.5rem">
+            <button class="btn-primary" id="save-project-btn" onclick="saveProject()">Save Project</button>
+            <button class="btn-secondary" onclick="resetProjectForm()">Clear</button>
+          </div>
+          <div id="project-form-status" style="margin-top:1rem;font-size:0.85rem;display:none"></div>
+        </div>
+      </div>
+
+      <!-- INQUIRIES -->
+      <div class="page" id="page-inquiries">
+        <div class="section-header">
+          <h3>Contact Inquiries</h3>
+          <div style="display:flex;gap:0.5rem">
+            <select id="status-filter" onchange="filterInquiries()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.4rem 0.75rem;color:var(--text2);font-size:0.8rem">
+              <option value="all">All</option>
+              <option value="new">New</option>
+              <option value="contacted">Contacted</option>
+              <option value="closed">Closed</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Service</th>
+                <th>Message</th>
+                <th>Status</th>
+                <th>Date</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="inquiries-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ABOUT ME -->
+      <div class="page" id="page-about-me">
+        <div class="section-header">
+          <h3>About Me</h3>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.75rem;max-width:640px">
+          <p style="font-size:0.85rem;color:var(--text3);margin-bottom:1.5rem">This content appears in the About section of your public website. Changes save immediately.</p>
+          <div class="form-group">
+            <label>Profile / About Image</label>
+            <div class="upload-zone" id="about-upload-zone">
+              <input type="file" id="about-image-file" accept="image/jpeg,image/png,image/webp" onchange="handleAboutImageSelect(this)">
+              <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <p><strong>Click to upload</strong> or drag and drop</p>
+              <p style="font-size:0.75rem;margin-top:0.25rem">JPG, PNG, WEBP up to 10MB</p>
+            </div>
+            <div class="upload-progress" id="about-upload-progress"><div class="upload-progress-bar" id="about-upload-bar"></div></div>
+            <div class="upload-preview" id="about-upload-preview" style="display:none"></div>
+            <input type="hidden" id="about-image-url">
+            <div id="about-upload-status" style="font-size:0.8rem;margin-top:0.5rem;color:var(--text3)"></div>
+          </div>
+          <div class="form-group">
+            <label>Section Title</label>
+            <input type="text" id="about-title" placeholder="e.g. Design is How I Think">
+          </div>
+          <div class="form-group">
+            <label>Subtitle / Tagline (optional)</label>
+            <input type="text" id="about-subtitle" placeholder="e.g. Who I Am">
+          </div>
+          <div class="form-group">
+            <label>Bio / Description</label>
+            <textarea id="about-description" style="min-height:160px" placeholder="Write your About Me bio here..."></textarea>
+          </div>
+          <div style="display:flex;gap:0.75rem;margin-top:0.5rem">
+            <button class="btn-primary" id="save-about-btn" onclick="saveAbout()">Save About Me</button>
+            <button class="btn-secondary" onclick="loadAbout()">Reset</button>
+          </div>
+          <div id="about-form-status" style="margin-top:1rem;font-size:0.85rem;display:none"></div>
+        </div>
+      </div>
+
+      <!-- LOGO MANAGEMENT -->
+      <div class="page" id="page-logo">
+        <div class="section-header">
+          <h3>Logo Management</h3>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.75rem;max-width:640px">
+          <p style="font-size:0.85rem;color:var(--text3);margin-bottom:1.5rem">Upload your company logo. It will replace the "A×D" placeholder across your website. If removed, the placeholder is restored automatically.</p>
+          <div class="form-group">
+            <label>Current Logo</label>
+            <div id="logo-current-preview" style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:1.5rem;display:flex;align-items:center;justify-content:center;min-height:100px;margin-bottom:1rem">
+              <span style="color:var(--text3);font-size:0.85rem">No logo uploaded — using A×D placeholder</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Upload New Logo</label>
+            <div class="upload-zone" id="logo-upload-zone">
+              <input type="file" id="logo-image-file" accept="image/jpeg,image/png,image/webp,image/svg+xml" onchange="handleLogoImageSelect(this)">
+              <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <p><strong>Click to upload</strong> or drag and drop</p>
+              <p style="font-size:0.75rem;margin-top:0.25rem">JPG, PNG, WEBP, SVG up to 10MB. Transparent PNG recommended.</p>
+            </div>
+            <div class="upload-progress" id="logo-upload-progress"><div class="upload-progress-bar" id="logo-upload-bar"></div></div>
+            <div class="upload-preview" id="logo-upload-preview" style="display:none;background:var(--surface2);padding:1rem;text-align:center"></div>
+            <input type="hidden" id="logo-image-url">
+            <div id="logo-upload-status" style="font-size:0.8rem;margin-top:0.5rem;color:var(--text3)"></div>
+          </div>
+          <div style="display:flex;gap:0.75rem;margin-top:0.5rem">
+            <button class="btn-primary" id="save-logo-btn" onclick="saveLogo()">Save Logo</button>
+            <button class="btn-danger" id="remove-logo-btn" onclick="removeLogo()">Remove Logo</button>
+          </div>
+          <div id="logo-form-status" style="margin-top:1rem;font-size:0.85rem;display:none"></div>
+        </div>
+      </div>
+
+      <!-- TESTIMONIALS -->
+      <div class="page" id="page-testimonials">
+        <div class="section-header">
+          <h3>Testimonials</h3>
+          <button class="btn-primary btn-sm" onclick="showAddTestimonialForm()">+ Add Testimonial</button>
+        </div>
+
+        <!-- Add / Edit form (hidden by default) -->
+        <div id="testimonial-form-wrap" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.75rem;max-width:640px;margin-bottom:2rem">
+          <h4 id="testimonial-form-heading" style="margin-bottom:1.25rem;font-size:1rem">Add Testimonial</h4>
+          <input type="hidden" id="testimonial-edit-id">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Client Name *</label>
+              <input type="text" id="t-name" placeholder="e.g. Aisha Mwangi">
+            </div>
+            <div class="form-group">
+              <label>Role / Company *</label>
+              <input type="text" id="t-role" placeholder="e.g. CEO, Glow Skincare Co.">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Testimonial Text *</label>
+            <textarea id="t-text" style="min-height:120px" placeholder="What did the client say?"></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Rating (1–5)</label>
+              <select id="t-rating">
+                <option value="5">★★★★★ — 5</option>
+                <option value="4">★★★★☆ — 4</option>
+                <option value="3">★★★☆☆ — 3</option>
+                <option value="2">★★☆☆☆ — 2</option>
+                <option value="1">★☆☆☆☆ — 1</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Initials (shown in avatar)</label>
+              <input type="text" id="t-initials" placeholder="e.g. AM" maxlength="3">
+            </div>
+          </div>
+          <div style="display:flex;gap:0.75rem">
+            <button class="btn-primary" id="save-testimonial-btn" onclick="saveTestimonial()">Save</button>
+            <button class="btn-secondary" onclick="hideTestimonialForm()">Cancel</button>
+          </div>
+          <div id="testimonial-form-status" style="margin-top:1rem;font-size:0.85rem;display:none"></div>
+        </div>
+
+        <!-- Testimonials list -->
+        <div id="testimonials-list"></div>
+      </div>
+
+    </div><!-- /page-content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- INQUIRY DETAIL MODAL -->
+<div class="modal-backdrop" id="inquiry-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('inquiry-modal')">×</button>
+    <h3 id="modal-inquiry-name">Inquiry</h3>
+    <div id="modal-inquiry-body"></div>
+  </div>
+</div>
+
+<!-- DELETE CONFIRM MODAL -->
+<div class="modal-backdrop" id="delete-modal">
+  <div class="modal" style="max-width:400px">
+    <button class="modal-close" onclick="closeModal('delete-modal')">×</button>
+    <h3>Delete Project?</h3>
+    <p style="color:var(--text3);font-size:0.9rem;margin:1rem 0">This cannot be undone. The project will be permanently removed from your portfolio.</p>
+    <div style="display:flex;gap:0.75rem">
+      <button class="btn-danger" id="confirm-delete-btn">Delete</button>
+      <button class="btn-secondary" onclick="closeModal('delete-modal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────────────
+let token = localStorage.getItem('axd_token') || '';
+let adminEmail = localStorage.getItem('axd_email') || '';
+let allProjects = [];
+let allInquiries = [];
+let pendingDeleteId = null;
+
+const API = ''; // same origin
+
+// ── BOOT ──────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  if (token) {
+    showApp();
+  }
+  // Enter key on login
+  document.getElementById('login-password').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+  // Drag and drop
+  const zone = document.getElementById('upload-zone');
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file) handleFileSelect({ files: [file] });
+  });
+});
+
+// ── AUTH ───────────────────────────────────────────────────────
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-error');
+  const btn = document.getElementById('login-btn');
+
+  if (!email || !password) { showLoginError('Please enter your email and password.'); return; }
+
+  btn.textContent = 'Signing in...';
+  btn.disabled = true;
+  errEl.style.display = 'none';
+
+  try {
+    const res = await fetch(`${API}/api/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Login failed.');
+    token = data.token;
+    adminEmail = data.admin.email;
+    localStorage.setItem('axd_token', token);
+    localStorage.setItem('axd_email', adminEmail);
+    showApp();
+  } catch (err) {
+    showLoginError(err.message);
+  } finally {
+    btn.textContent = 'Sign In';
+    btn.disabled = false;
+  }
+}
+
+function showLoginError(msg) {
+  const el = document.getElementById('login-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function doLogout() {
+  token = '';
+  adminEmail = '';
+  localStorage.removeItem('axd_token');
+  localStorage.removeItem('axd_email');
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+}
+
+function showApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  document.getElementById('admin-email-display').textContent = adminEmail;
+  loadDashboard();
+}
+
+// ── NAVIGATION ─────────────────────────────────────────────────
+const pageTitles = {
+  dashboard: 'Dashboard',
+  projects: 'Projects',
+  'add-project': 'Add Project',
+  inquiries: 'Inquiries',
+  'about-me': 'About Me',
+  logo: 'Logo Management',
+  testimonials: 'Testimonials'
+};
+
+function showPage(name, navEl) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  if (navEl) navEl.classList.add('active');
+  document.getElementById('page-title').textContent = pageTitles[name] || name;
+
+  if (name === 'projects') loadProjects();
+  if (name === 'inquiries') loadInquiries();
+  if (name === 'dashboard') loadDashboard();
+  if (name === 'about-me') loadAbout();
+  if (name === 'logo') loadLogo();
+  if (name === 'testimonials') loadTestimonials();
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────
+async function loadDashboard() {
+  try {
+    const [projRes, inqRes] = await Promise.all([
+      fetch(`${API}/api/projects`),
+      fetch(`${API}/api/inquiries`, { headers: { Authorization: `Bearer ${token}` } })
+    ]);
+    allProjects = projRes.ok ? await projRes.json() : [];
+    allInquiries = inqRes.ok ? await inqRes.json() : [];
+
+    document.getElementById('stat-projects').textContent = allProjects.length;
+    document.getElementById('stat-inquiries').textContent = allInquiries.length;
+    const newCount = allInquiries.filter(i => i.status === 'new').length;
+    document.getElementById('stat-new').textContent = newCount;
+
+    // Inquiry count badge
+    const badge = document.getElementById('inquiry-count');
+    if (newCount > 0) { badge.textContent = newCount; badge.style.display = 'inline'; }
+
+    // Recent 5
+    const recent = allInquiries.slice(0, 5);
+    const el = document.getElementById('recent-inquiries-list');
+    if (recent.length === 0) {
+      el.innerHTML = `<div class="empty"><p>No inquiries yet.</p></div>`;
+    } else {
+      el.innerHTML = `<div class="table-wrap"><table>
+        <thead><tr><th>Name</th><th>Email</th><th>Service</th><th>Status</th><th>Date</th></tr></thead>
+        <tbody>${recent.map(i => `
+          <tr style="cursor:pointer" onclick="openInquiry(${i.id})">
+            <td>${esc(i.name)}</td>
+            <td style="color:var(--text3)">${esc(i.email)}</td>
+            <td>${esc(i.subject || '—')}</td>
+            <td><span class="status-badge status-${i.status}">${i.status}</span></td>
+            <td style="color:var(--text3)">${formatDate(i.created_at)}</td>
+          </tr>`).join('')}
+        </tbody></table></div>`;
+    }
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+// ── PROJECTS ──────────────────────────────────────────────────
+async function loadProjects() {
+  try {
+    const res = await fetch(`${API}/api/projects`);
+    allProjects = res.ok ? await res.json() : [];
+    renderProjects(allProjects);
+  } catch (err) {
+    showToast('Failed to load projects.', 'error');
+  }
+}
+
+function renderProjects(projects) {
+  const grid = document.getElementById('projects-grid');
+  if (projects.length === 0) {
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg><p>No projects yet. Add your first one!</p></div>`;
+    return;
+  }
+  grid.innerHTML = projects.map(p => `
+    <div class="project-card">
+      <div class="project-card-img">
+        ${p.image_url ? `<img src="${esc(p.image_url)}" alt="${esc(p.title)}" loading="lazy">` : '<span>No image</span>'}
+      </div>
+      <div class="project-card-body">
+        <div class="project-card-tag">${esc(p.category || 'Design')}${p.featured ? '<span class="badge-featured">Featured</span>' : ''}</div>
+        <div class="project-card-title">${esc(p.title)}</div>
+        <div class="project-card-actions">
+          <button class="btn-secondary btn-sm" onclick="editProject(${p.id})">Edit</button>
+          <button class="btn-danger" onclick="confirmDelete(${p.id})">Delete</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function editProject(id) {
+  const p = allProjects.find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('edit-project-id').value = p.id;
+  document.getElementById('proj-title').value = p.title || '';
+  document.getElementById('proj-category').value = p.category || '';
+  document.getElementById('proj-description').value = p.description || '';
+  document.getElementById('proj-image-url').value = p.image_url || '';
+  document.getElementById('proj-client').value = p.client_name || '';
+  document.getElementById('proj-year').value = p.project_year || '';
+  document.getElementById('proj-deliverables').value = Array.isArray(p.deliverables) ? p.deliverables.join(', ') : (p.deliverables || '');
+  document.getElementById('proj-url').value = p.project_url || '';
+  document.getElementById('proj-video').value = p.video_url || '';
+  document.getElementById('proj-featured').checked = !!p.featured;
+  document.getElementById('project-form-title').textContent = 'Edit Project';
+  if (p.image_url) {
+    document.getElementById('upload-preview').innerHTML = `<img src="${esc(p.image_url)}" alt="preview">`;
+    document.getElementById('upload-preview').style.display = 'block';
+  }
+  showPage('add-project', document.querySelectorAll('.nav-item')[2]);
+}
+
+function resetProjectForm() {
+  document.getElementById('edit-project-id').value = '';
+  document.getElementById('proj-title').value = '';
+  document.getElementById('proj-category').value = '';
+  document.getElementById('proj-description').value = '';
+  document.getElementById('proj-image-url').value = '';
+  document.getElementById('proj-client').value = '';
+  document.getElementById('proj-year').value = '';
+  document.getElementById('proj-deliverables').value = '';
+  document.getElementById('proj-url').value = '';
+  document.getElementById('proj-video').value = '';
+  document.getElementById('proj-featured').checked = false;
+  document.getElementById('upload-preview').style.display = 'none';
+  document.getElementById('upload-preview').innerHTML = '';
+  document.getElementById('upload-status').textContent = '';
+  document.getElementById('project-form-title').textContent = 'Add New Project';
+  document.getElementById('project-form-status').style.display = 'none';
+}
+
+async function saveProject() {
+  const id = document.getElementById('edit-project-id').value;
+  const title = document.getElementById('proj-title').value.trim();
+  const statusEl = document.getElementById('project-form-status');
+
+  if (!title) {
+    statusEl.textContent = 'Project title is required.';
+    statusEl.style.cssText = 'display:block;color:var(--red)';
+    return;
+  }
+
+  const body = {
+    title,
+    category: document.getElementById('proj-category').value,
+    description: document.getElementById('proj-description').value.trim(),
+    image_url: document.getElementById('proj-image-url').value,
+    client_name: document.getElementById('proj-client').value.trim(),
+    project_year: document.getElementById('proj-year').value.trim(),
+    deliverables: document.getElementById('proj-deliverables').value.trim(),
+    project_url: document.getElementById('proj-url').value.trim(),
+    video_url: document.getElementById('proj-video').value.trim(),
+    featured: document.getElementById('proj-featured').checked
+  };
+
+  const btn = document.getElementById('save-project-btn');
+  btn.textContent = 'Saving...';
+  btn.disabled = true;
+
+  try {
+    const url = id ? `${API}/api/projects/${id}` : `${API}/api/projects`;
+    const method = id ? 'PUT' : 'POST';
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Save failed.');
+    showToast(id ? 'Project updated!' : 'Project added!', 'success');
+    resetProjectForm();
+    showPage('projects', document.querySelectorAll('.nav-item')[1]);
+  } catch (err) {
+    statusEl.textContent = err.message;
+    statusEl.style.cssText = 'display:block;color:var(--red)';
+  } finally {
+    btn.textContent = 'Save Project';
+    btn.disabled = false;
+  }
+}
+
+function confirmDelete(id) {
+  pendingDeleteId = id;
+  document.getElementById('confirm-delete-btn').onclick = () => deleteProject(id);
+  document.getElementById('delete-modal').classList.add('open');
+}
+
+async function deleteProject(id) {
+  try {
+    const res = await fetch(`${API}/api/projects/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!res.ok) throw new Error('Delete failed.');
+    closeModal('delete-modal');
+    showToast('Project deleted.', 'success');
+    loadProjects();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+// ── IMAGE UPLOAD ───────────────────────────────────────────────
+function handleFileSelect(input) {
+  const file = input.files ? input.files[0] : input;
+  if (!file) return;
+  uploadImage(file);
+}
+
+async function uploadImage(file) {
+  const statusEl = document.getElementById('upload-status');
+  const progressWrap = document.getElementById('upload-progress');
+  const progressBar = document.getElementById('upload-bar');
+  const preview = document.getElementById('upload-preview');
+
+  statusEl.textContent = 'Uploading...';
+  progressWrap.style.display = 'block';
+  progressBar.style.width = '30%';
+
+  const formData = new FormData();
+  formData.append('image', file);
+
+  try {
+    progressBar.style.width = '60%';
+    const res = await fetch(`${API}/api/upload`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData
+    });
+    progressBar.style.width = '100%';
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Upload failed.');
+    document.getElementById('proj-image-url').value = data.url;
+    preview.innerHTML = `<img src="${data.url}" alt="preview">`;
+    preview.style.display = 'block';
+    statusEl.style.color = 'var(--green)';
+    statusEl.textContent = 'Image uploaded successfully.';
+    setTimeout(() => { progressWrap.style.display = 'none'; progressBar.style.width = '0'; }, 1000);
+  } catch (err) {
+    statusEl.style.color = 'var(--red)';
+    statusEl.textContent = err.message;
+    progressWrap.style.display = 'none';
+  }
+}
+
+// ── INQUIRIES ─────────────────────────────────────────────────
+async function loadInquiries() {
+  try {
+    const res = await fetch(`${API}/api/inquiries`, { headers: { Authorization: `Bearer ${token}` } });
+    allInquiries = res.ok ? await res.json() : [];
+    renderInquiries(allInquiries);
+  } catch (err) {
+    showToast('Failed to load inquiries.', 'error');
+  }
+}
+
+function filterInquiries() {
+  const filter = document.getElementById('status-filter').value;
+  const filtered = filter === 'all' ? allInquiries : allInquiries.filter(i => i.status === filter);
+  renderInquiries(filtered);
+}
+
+function renderInquiries(list) {
+  const tbody = document.getElementById('inquiries-tbody');
+  if (list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:2rem">No inquiries found.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = list.map(i => `
+    <tr>
+      <td style="font-weight:500;cursor:pointer" onclick="openInquiry(${i.id})">${esc(i.name)}</td>
+      <td style="color:var(--text3)">${esc(i.email)}</td>
+      <td>${esc(i.subject || '—')}</td>
+      <td class="inquiry-msg">${esc(i.message)}</td>
+      <td>
+        <select onchange="updateStatus(${i.id}, this.value)" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:0.25rem 0.5rem;color:var(--text2);font-size:0.75rem">
+          <option value="new" ${i.status==='new'?'selected':''}>New</option>
+          <option value="contacted" ${i.status==='contacted'?'selected':''}>Contacted</option>
+          <option value="closed" ${i.status==='closed'?'selected':''}>Closed</option>
+        </select>
+      </td>
+      <td style="color:var(--text3);white-space:nowrap">${formatDate(i.created_at)}</td>
+      <td><button class="btn-secondary btn-sm" onclick="openInquiry(${i.id})">View</button></td>
+    </tr>`).join('');
+}
+
+async function updateStatus(id, status) {
+  try {
+    const res = await fetch(`${API}/api/inquiries/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ status })
+    });
+    if (!res.ok) throw new Error('Update failed.');
+    const idx = allInquiries.findIndex(i => i.id === id);
+    if (idx !== -1) allInquiries[idx].status = status;
+    showToast('Status updated.', 'success');
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+function openInquiry(id) {
+  const i = allInquiries.find(x => x.id === id);
+  if (!i) return;
+  document.getElementById('modal-inquiry-name').textContent = i.name;
+  document.getElementById('modal-inquiry-body').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:1.25rem">
+      <div><div style="font-size:0.7rem;color:var(--text3);text-transform:uppercase;margin-bottom:0.25rem">Email</div><div style="font-size:0.9rem">${esc(i.email)}</div></div>
+      <div><div style="font-size:0.7rem;color:var(--text3);text-transform:uppercase;margin-bottom:0.25rem">Company</div><div style="font-size:0.9rem">${esc(i.company || '—')}</div></div>
+      <div><div style="font-size:0.7rem;color:var(--text3);text-transform:uppercase;margin-bottom:0.25rem">Service</div><div style="font-size:0.9rem">${esc(i.subject || '—')}</div></div>
+      <div><div style="font-size:0.7rem;color:var(--text3);text-transform:uppercase;margin-bottom:0.25rem">Budget</div><div style="font-size:0.9rem">${esc(i.budget || '—')}</div></div>
+    </div>
+    <div style="font-size:0.7rem;color:var(--text3);text-transform:uppercase;margin-bottom:0.5rem">Message</div>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:1rem;font-size:0.9rem;line-height:1.6;color:var(--text2)">${esc(i.message)}</div>
+    <div style="margin-top:1.25rem;display:flex;gap:0.75rem">
+      <a href="mailto:${esc(i.email)}" class="btn-primary" style="font-size:0.875rem">Reply by Email</a>
+      <span style="font-size:0.75rem;color:var(--text3);align-self:center">${formatDate(i.created_at)}</span>
+    </div>`;
+  document.getElementById('inquiry-modal').classList.add('open');
+}
+
+// ── ABOUT ME ──────────────────────────────────────────────────
+async function loadAbout() {
+  try {
+    const res = await fetch(`${API}/api/content/about`);
+    if (!res.ok) return;
+    const data = await res.json();
+    document.getElementById('about-title').value = data.title || '';
+    document.getElementById('about-subtitle').value = data.subtitle || '';
+    document.getElementById('about-description').value = data.description || '';
+    document.getElementById('about-image-url').value = data.image_url || '';
+    if (data.image_url) {
+      document.getElementById('about-upload-preview').innerHTML = `<img src="${esc(data.image_url)}" alt="About preview">`;
+      document.getElementById('about-upload-preview').style.display = 'block';
+    }
+  } catch (err) { /* no content yet, fields stay empty */ }
+}
+
+async function saveAbout() {
+  const btn = document.getElementById('save-about-btn');
+  const statusEl = document.getElementById('about-form-status');
+  btn.textContent = 'Saving...';
+  btn.disabled = true;
+  try {
+    const body = {
+      title: document.getElementById('about-title').value.trim(),
+      subtitle: document.getElementById('about-subtitle').value.trim(),
+      description: document.getElementById('about-description').value.trim(),
+      image_url: document.getElementById('about-image-url').value.trim()
+    };
+    const res = await fetch(`${API}/api/content/about`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) throw new Error((await res.json()).error || 'Save failed.');
+    showToast('About Me saved!', 'success');
+    statusEl.style.cssText = 'display:block;color:var(--green)';
+    statusEl.textContent = 'Saved successfully.';
+    setTimeout(() => { statusEl.style.display = 'none'; }, 3000);
+  } catch (err) {
+    statusEl.style.cssText = 'display:block;color:var(--red)';
+    statusEl.textContent = err.message;
+  } finally {
+    btn.textContent = 'Save About Me';
+    btn.disabled = false;
+  }
+}
+
+function handleAboutImageSelect(input) {
+  const file = input.files[0];
+  if (!file) return;
+  uploadImageTo(file, 'about-upload-progress', 'about-upload-bar', 'about-upload-preview', 'about-image-url', 'about-upload-status');
+}
+
+// ── LOGO ──────────────────────────────────────────────────────
+async function loadLogo() {
+  try {
+    const res = await fetch(`${API}/api/content/logo`);
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.image_url) {
+      document.getElementById('logo-image-url').value = data.image_url;
+      document.getElementById('logo-current-preview').innerHTML =
+        `<img src="${esc(data.image_url)}" alt="Current logo" style="max-height:80px;max-width:260px;object-fit:contain;">`;
+    }
+  } catch (err) { /* no logo yet */ }
+}
+
+async function saveLogo() {
+  const url = document.getElementById('logo-image-url').value.trim();
+  const statusEl = document.getElementById('logo-form-status');
+  if (!url) {
+    statusEl.style.cssText = 'display:block;color:var(--red)';
+    statusEl.textContent = 'Please upload a logo image first.';
+    return;
+  }
+  const btn = document.getElementById('save-logo-btn');
+  btn.textContent = 'Saving...';
+  btn.disabled = true;
+  try {
+    const res = await fetch(`${API}/api/content/logo`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ image_url: url })
+    });
+    if (!res.ok) throw new Error((await res.json()).error || 'Save failed.');
+    document.getElementById('logo-current-preview').innerHTML =
+      `<img src="${esc(url)}" alt="Current logo" style="max-height:80px;max-width:260px;object-fit:contain;">`;
+    showToast('Logo saved!', 'success');
+    statusEl.style.cssText = 'display:block;color:var(--green)';
+    statusEl.textContent = 'Logo saved successfully.';
+    setTimeout(() => { statusEl.style.display = 'none'; }, 3000);
+  } catch (err) {
+    statusEl.style.cssText = 'display:block;color:var(--red)';
+    statusEl.textContent = err.message;
+  } finally {
+    btn.textContent = 'Save Logo';
+    btn.disabled = false;
+  }
+}
+
+async function removeLogo() {
+  if (!confirm('Remove the logo? The A×D placeholder will be restored on the website.')) return;
+  const statusEl = document.getElementById('logo-form-status');
+  try {
+    const res = await fetch(`${API}/api/content/logo`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!res.ok) throw new Error('Failed to remove logo.');
+    document.getElementById('logo-image-url').value = '';
+    document.getElementById('logo-upload-preview').style.display = 'none';
+    document.getElementById('logo-current-preview').innerHTML =
+      `<span style="color:var(--text3);font-size:0.85rem">No logo uploaded — using A×D placeholder</span>`;
+    showToast('Logo removed.', 'success');
+  } catch (err) {
+    statusEl.style.cssText = 'display:block;color:var(--red)';
+    statusEl.textContent = err.message;
+  }
+}
+
+function handleLogoImageSelect(input) {
+  const file = input.files[0];
+  if (!file) return;
+  uploadImageTo(file, 'logo-upload-progress', 'logo-upload-bar', 'logo-upload-preview', 'logo-image-url', 'logo-upload-status');
+}
+
+// ── SHARED UPLOAD HELPER (reuses existing R2 flow) ────────────
+async function uploadImageTo(file, progressWrapId, progressBarId, previewId, urlInputId, statusId) {
+  const statusEl = document.getElementById(statusId);
+  const progressWrap = document.getElementById(progressWrapId);
+  const progressBar = document.getElementById(progressBarId);
+  const preview = document.getElementById(previewId);
+  statusEl.style.color = 'var(--text3)';
+  statusEl.textContent = 'Uploading...';
+  progressWrap.style.display = 'block';
+  progressBar.style.width = '30%';
+  const formData = new FormData();
+  formData.append('image', file);
+  try {
+    progressBar.style.width = '60%';
+    const res = await fetch(`${API}/api/upload`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData
+    });
+    progressBar.style.width = '100%';
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Upload failed.');
+    document.getElementById(urlInputId).value = data.url;
+    preview.innerHTML = `<img src="${data.url}" alt="preview" style="max-height:160px;object-fit:contain;">`;
+    preview.style.display = 'block';
+    statusEl.style.color = 'var(--green)';
+    statusEl.textContent = 'Image uploaded successfully.';
+    setTimeout(() => { progressWrap.style.display = 'none'; progressBar.style.width = '0'; }, 1000);
+  } catch (err) {
+    statusEl.style.color = 'var(--red)';
+    statusEl.textContent = err.message;
+    progressWrap.style.display = 'none';
+  }
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+document.addEventListener('click', e => {
+  if (e.target.classList.contains('modal-backdrop')) closeModal(e.target.id);
+});
+
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `show ${type}`;
+  setTimeout(() => t.className = '', 3500);
+}
+
+// ── TESTIMONIALS ──────────────────────────────────────────────
+let allTestimonials = [];
+
+async function loadTestimonials() {
+  try {
+    const res = await fetch(`${API}/api/testimonials`);
+    allTestimonials = res.ok ? await res.json() : [];
+    renderTestimonialsList();
+  } catch (err) {
+    showToast('Failed to load testimonials.', 'error');
+  }
+}
+
+function renderTestimonialsList() {
+  const el = document.getElementById('testimonials-list');
+  if (allTestimonials.length === 0) {
+    el.innerHTML = `<div class="empty"><p>No testimonials yet. Add your first one!</p></div>`;
+    return;
+  }
+  el.innerHTML = allTestimonials.map(t => `
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem 1.5rem;margin-bottom:1rem;display:flex;gap:1rem;align-items:flex-start">
+      <div style="width:42px;height:42px;border-radius:50%;background:var(--gold-glow);border:1px solid var(--border-gold);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;color:var(--gold);flex-shrink:0">${esc(t.initials || t.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase())}</div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.25rem">
+          <span style="font-weight:600;font-size:0.95rem">${esc(t.name)}</span>
+          <span style="font-size:0.75rem;color:var(--text3)">${esc(t.role)}</span>
+          <span style="color:var(--gold);font-size:0.8rem">${'★'.repeat(t.rating || 5)}</span>
+        </div>
+        <p style="font-size:0.875rem;color:var(--text2);line-height:1.6">${esc(t.text)}</p>
+      </div>
+      <div style="display:flex;gap:0.5rem;flex-shrink:0">
+        <button class="btn-secondary btn-sm" onclick="editTestimonial(${t.id})">Edit</button>
+        <button class="btn-danger" onclick="deleteTestimonial(${t.id})">Delete</button>
+      </div>
+    </div>`).join('');
+}
+
+function showAddTestimonialForm() {
+  document.getElementById('testimonial-edit-id').value = '';
+  document.getElementById('t-name').value = '';
+  document.getElementById('t-role').value = '';
+  document.getElementById('t-text').value = '';
+  document.getElementById('t-rating').value = '5';
+  document.getElementById('t-initials').value = '';
+  document.getElementById('testimonial-form-heading').textContent = 'Add Testimonial';
+  document.getElementById('testimonial-form-status').style.display = 'none';
+  document.getElementById('testimonial-form-wrap').style.display = 'block';
+  document.getElementById('t-name').focus();
+}
+
+function hideTestimonialForm() {
+  document.getElementById('testimonial-form-wrap').style.display = 'none';
+}
+
+function editTestimonial(id) {
+  const t = allTestimonials.find(x => x.id === id);
+  if (!t) return;
+  document.getElementById('testimonial-edit-id').value = t.id;
+  document.getElementById('t-name').value = t.name || '';
+  document.getElementById('t-role').value = t.role || '';
+  document.getElementById('t-text').value = t.text || '';
+  document.getElementById('t-rating').value = t.rating || 5;
+  document.getElementById('t-initials').value = t.initials || '';
+  document.getElementById('testimonial-form-heading').textContent = 'Edit Testimonial';
+  document.getElementById('testimonial-form-status').style.display = 'none';
+  document.getElementById('testimonial-form-wrap').style.display = 'block';
+  document.getElementById('t-name').focus();
+}
+
+async function saveTestimonial() {
+  const id = document.getElementById('testimonial-edit-id').value;
+  const name = document.getElementById('t-name').value.trim();
+  const role = document.getElementById('t-role').value.trim();
+  const text = document.getElementById('t-text').value.trim();
+  const statusEl = document.getElementById('testimonial-form-status');
+
+  if (!name || !role || !text) {
+    statusEl.style.cssText = 'display:block;color:var(--red)';
+    statusEl.textContent = 'Name, role, and testimonial text are required.';
+    return;
+  }
+
+  const body = {
+    name, role, text,
+    rating: parseInt(document.getElementById('t-rating').value) || 5,
+    initials: document.getElementById('t-initials').value.trim() || name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()
+  };
+
+  const btn = document.getElementById('save-testimonial-btn');
+  btn.textContent = 'Saving...'; btn.disabled = true;
+
+  try {
+    const url = id ? `${API}/api/testimonials/${id}` : `${API}/api/testimonials`;
+    const res = await fetch(url, {
+      method: id ? 'PUT' : 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Save failed.');
+    showToast(id ? 'Testimonial updated!' : 'Testimonial added!', 'success');
+    hideTestimonialForm();
+    loadTestimonials();
+  } catch (err) {
+    statusEl.style.cssText = 'display:block;color:var(--red)';
+    statusEl.textContent = err.message;
+  } finally {
+    btn.textContent = 'Save'; btn.disabled = false;
+  }
+}
+
+async function deleteTestimonial(id) {
+  if (!confirm('Delete this testimonial?')) return;
+  try {
+    const res = await fetch(`${API}/api/testimonials/${id}`, {
+      method: 'DELETE', headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!res.ok) throw new Error('Delete failed.');
+    showToast('Testimonial deleted.', 'success');
+    loadTestimonials();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+function esc(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function formatDate(str) {
+  if (!str) return '—';
+  return new Date(str).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
+}
+</script>
+</body>
+</html>
