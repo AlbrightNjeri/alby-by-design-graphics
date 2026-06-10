@@ -5,12 +5,13 @@ const cors    = require('cors');
 const path    = require('path');
 
 // ── Route handlers ───────────────────────────────────────────────
-const authRoutes     = require('./routes/auth');
-const projectRoutes  = require('./routes/projects');
-const contactRoutes  = require('./routes/contact');
-const uploadRoutes   = require('./routes/upload');
-const contentRoutes       = require('./routes/content');
-const testimonialsRoutes  = require('./routes/testimonials');
+const authRoutes         = require('./routes/auth');
+const projectRoutes      = require('./routes/projects');
+const contactRoutes      = require('./routes/contact');
+const uploadRoutes       = require('./routes/upload');
+const contentRoutes      = require('./routes/content');
+const testimonialsRoutes = require('./routes/testimonials');
+const servicesRoutes     = require('./routes/services');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -56,6 +57,7 @@ app.use('/api',          contactRoutes);  // POST /api/contact, GET|PATCH /api/i
 app.use('/api/upload',   uploadRoutes);   // POST /api/upload
 app.use('/api/content',      contentRoutes);      // GET|PUT /api/content/about, /api/content/logo
 app.use('/api/testimonials', testimonialsRoutes); // GET|POST|PUT|DELETE /api/testimonials
+app.use('/api/services',     servicesRoutes);     // GET|POST|PUT|DELETE /api/services
 
 // ── SPA fallback — serve index.html for any unmatched GET ─────────
 app.get('*', (_req, res) => {

@@ -10,6 +10,9 @@
 <meta property="og:description" content="Design that speaks before words do. Premium branding, social media design, and visual experiences.">
 <meta property="og:type" content="website">
 <meta name="robots" content="index, follow">
+<link rel="icon" href="/favicon.ico" />
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Montserrat:wght@300;400;500;600&family=Raleway:wght@300;400;500&display=swap" rel="stylesheet">
@@ -123,58 +126,8 @@ View Portfolio
 </div>
 <a href="#portfolio" class="btn-secondary reveal">View All Work</a>
 </div>
-<div class="work-grid">
-<div class="work-card featured reveal" data-project="brand-glow" tabindex="0" role="button" aria-label="View Brand Glow project">
-<img src="images/work/brand-glow.jpg" alt="Glow Skincare Co. – Brand Identity project by Alby by Design Graphics" loading="lazy" class="work-card-img" width="800" height="600">
-<div class="work-card-placeholder ph-1 work-card-fallback" aria-hidden="true" style="position:absolute;inset:0;z-index:0;display:none;">
-<svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="40" cy="40" r="30" stroke="#E0A53B" stroke-width="1.5" stroke-dasharray="6 3"/><circle cx="40" cy="40" r="18" fill="rgba(224,165,59,0.15)"/><text x="40" y="46" font-size="14" font-family="Poppins" fill="#E0A53B" text-anchor="middle" font-weight="700">BRAND</text></svg>
-</div>
-<div class="work-card-border" aria-hidden="true"></div>
-<div class="work-card-overlay">
-<div class="work-card-tag">Brand Identity</div>
-<div class="work-card-title">Glow Skincare Co.</div>
-</div>
-</div>
-<div class="work-card reveal reveal-delay-1" data-project="social-nova" tabindex="0" role="button" aria-label="View Nova Social project">
-<img src="images/work/social-nova.jpg" alt="Nova Tech Campaign – Social Media project by Alby by Design Graphics" loading="lazy" class="work-card-img" width="800" height="600">
-<div class="work-card-border" aria-hidden="true"></div>
-<div class="work-card-overlay">
-<div class="work-card-tag">Social Media</div>
-<div class="work-card-title">Nova Tech — Campaign</div>
-</div>
-</div>
-<div class="work-card reveal reveal-delay-2" data-project="logo-meridian" tabindex="0" role="button" aria-label="View Meridian Logo project">
-<img src="images/work/logo-meridian.jpg" alt="Meridian Capital – Logo Design project by Alby by Design Graphics" loading="lazy" class="work-card-img" width="800" height="600">
-<div class="work-card-border" aria-hidden="true"></div>
-<div class="work-card-overlay">
-<div class="work-card-tag">Logo Design</div>
-<div class="work-card-title">Meridian Capital</div>
-</div>
-</div>
-<div class="work-card reveal reveal-delay-1" data-project="poster-fest" tabindex="0" role="button" aria-label="View Fest Poster project">
-<img src="images/work/poster-fest.jpg" alt="Nairobi Arts Festival 2024 – Poster Design project by Alby by Design Graphics" loading="lazy" class="work-card-img" width="800" height="600">
-<div class="work-card-border" aria-hidden="true"></div>
-<div class="work-card-overlay">
-<div class="work-card-tag">Poster Design</div>
-<div class="work-card-title">Nairobi Arts Fest 2024</div>
-</div>
-</div>
-<div class="work-card reveal reveal-delay-2" data-project="flyer-pulse" tabindex="0" role="button" aria-label="View Pulse Flyer project">
-<img src="images/work/flyer-pulse.jpg" alt="Pulse Nightlife Brand – Flyer Design project by Alby by Design Graphics" loading="lazy" class="work-card-img" width="800" height="600">
-<div class="work-card-border" aria-hidden="true"></div>
-<div class="work-card-overlay">
-<div class="work-card-tag">Flyer Design</div>
-<div class="work-card-title">Pulse Nightlife Brand</div>
-</div>
-</div>
-<div class="work-card reveal" data-project="brand-roots" tabindex="0" role="button" aria-label="View Roots Brand project">
-<img src="images/work/brand-roots.jpg" alt="Roots Coffee Roasters – Brand Identity project by Alby by Design Graphics" loading="lazy" class="work-card-img" width="800" height="600">
-<div class="work-card-border" aria-hidden="true"></div>
-<div class="work-card-overlay">
-<div class="work-card-tag">Brand Identity</div>
-<div class="work-card-title">Roots Coffee Roasters</div>
-</div>
-</div>
+<div class="work-grid" id="work-grid">
+<!-- Populated dynamically by script.js after loadProjects() -->
 </div>
 </div>
 </section>
@@ -226,7 +179,8 @@ View Portfolio
 <h2 id="services-heading" class="section-heading reveal">Services Designed<br>to <span>Elevate You</span></h2>
 <p class="section-sub reveal">Every service is delivered with strategy, precision, and an obsessive attention to detail — because your brand deserves nothing less.</p>
 </div>
-<div class="services-grid">
+<div class="services-grid" id="services-grid">
+<!-- Populated dynamically — falls back to hardcoded cards below if API is empty -->
 <div class="service-card reveal">
 <div class="service-icon" aria-hidden="true">✦</div>
 <h3>Brand Identity</h3>
