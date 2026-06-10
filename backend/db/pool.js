@@ -25,3 +25,11 @@ pool.connect((err, client, release) => {
 });
 
 module.exports = pool;
+
+// Auto-create tables on startup
+const fs = require('fs');
+const path = require('path');
+pool.connect().then(client => {
+  const schema = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
+  return client.query(schema).finally(() => client.release());
+}).catch(err => console.error('[DB] Schema init error:', err.message));
