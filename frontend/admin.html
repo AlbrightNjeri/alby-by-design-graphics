@@ -684,7 +684,9 @@ let allProjects = [];
 let allInquiries = [];
 let pendingDeleteId = null;
 
-const API = ''; // same origin
+const API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? ''
+  : 'https://alby-by-design-graphics.onrender.com';
 
 // ── BOOT ──────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {

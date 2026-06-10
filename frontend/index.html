@@ -542,10 +542,15 @@ Send Message
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
 <script>
+// ── API base URL (works locally and on Netlify) ──
+const _BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? ''
+  : 'https://alby-by-design-graphics.onrender.com';
+
 // ── Dynamic logo: replace A×D marks with uploaded logo if one exists ──
 (async function loadSiteLogo() {
   try {
-    const res = await fetch('/api/content/logo');
+    const res = await fetch(`${_BASE}/api/content/logo`);
     if (!res.ok) return;
     const data = await res.json();
     if (!data.image_url) return;
@@ -573,7 +578,7 @@ Send Message
 // ── Dynamic testimonials: replace hardcoded cards if DB has entries ──
 (async function loadTestimonialsPublic() {
   try {
-    const res = await fetch('/api/testimonials');
+    const res = await fetch(`${_BASE}/api/testimonials`);
     if (!res.ok) return;
     const items = await res.json();
     if (!Array.isArray(items) || items.length === 0) return;
@@ -600,7 +605,7 @@ Send Message
 
 (async function loadAboutContent() {
   try {
-    const res = await fetch('/api/content/about');
+    const res = await fetch(`${_BASE}/api/content/about`);
     if (!res.ok) return;
     const data = await res.json();
     if (!data.title && !data.description && !data.image_url) return;

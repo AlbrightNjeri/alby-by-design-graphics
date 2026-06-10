@@ -1,3 +1,8 @@
+// ===== API BASE URL =====
+const BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? ''
+  : 'https://alby-by-design-graphics.onrender.com';
+
 // ===== DATA (fallback if API unavailable) =====
 const portfolioProjectsFallback=[
 {id:'brand-glow',title:'Glow Skincare Co.',category:'branding',tag:'Brand Identity',emoji:'✦',bg:'ph-1',img:'images/portfolio/brand-glow.jpg',client:'Glow Skincare Co.',year:'2024',desc:'Complete brand identity for a premium Nairobi-based skincare startup. The challenge was to communicate both luxury and natural purity. I developed a warm gold and green palette with a custom logotype that conveys clean, botanical elegance.',deliverables:['Logo Design','Brand Guidelines','Colour System','Business Cards','Packaging Labels','Social Media Templates']},
@@ -23,7 +28,7 @@ const projectData = {};
 // ===== LOAD PROJECTS FROM API =====
 async function loadProjects() {
   try {
-    const res = await fetch('/api/projects');
+    const res = await fetch(`${BASE_URL}/api/projects`);
     if (res.ok) {
       const data = await res.json();
       if (Array.isArray(data) && data.length > 0) {
@@ -214,7 +219,7 @@ document.getElementById('submit-btn').addEventListener('click', () => {
     message
   };
 
-  fetch('/api/contact', {
+  fetch(`${BASE_URL}/api/contact`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(formData)

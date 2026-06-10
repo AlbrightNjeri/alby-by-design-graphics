@@ -19,8 +19,10 @@ const PORT = process.env.PORT || 3000;
 // In production, replace with your actual domain(s).
 const allowedOrigins = [
   'http://localhost:3000',
-  'http://localhost:5500',  // VS Code Live Server
+  'http://localhost:5500',
   'http://127.0.0.1:5500',
+  'https://alby-by-design-graphics.vercel.app',
+  'https://alby-by-design-graphics.onrender.com',
   process.env.FRONTEND_ORIGIN,
 ].filter(Boolean);
 
