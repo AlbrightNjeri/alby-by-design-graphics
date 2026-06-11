@@ -297,6 +297,59 @@ tr:hover td{background:rgba(255,255,255,0.02)}
 
 /* ── DIVIDER ── */
 .divider{height:1px;background:var(--border);margin:2rem 0}
+
+/* ── RESPONSIVE ADMIN ── */
+@media(max-width:768px){
+  /* Sidebar becomes a top bar */
+  #sidebar{
+    width:100%;height:auto;
+    position:fixed;top:0;left:0;right:0;bottom:auto;
+    flex-direction:row;align-items:center;justify-content:space-between;
+    border-right:none;border-bottom:1px solid var(--border);
+    z-index:200;overflow:visible;
+  }
+  .sidebar-logo{border-bottom:none;padding:0.75rem 1rem;flex:1}
+  .sidebar-nav{
+    display:none;
+    position:fixed;top:57px;left:0;right:0;
+    background:var(--surface);border-bottom:1px solid var(--border);
+    padding:0.5rem 0;z-index:199;flex:none;
+  }
+  .sidebar-nav.mobile-open{display:block}
+  .sidebar-footer{display:none}
+  #main{margin-left:0;padding-top:57px}
+  .topbar{position:sticky;top:57px}
+  .page-content{padding:1rem}
+  .stats-grid{grid-template-columns:1fr 1fr}
+  .projects-grid{grid-template-columns:1fr}
+  /* Mobile nav toggle button */
+  #mobile-nav-toggle{
+    display:flex;align-items:center;justify-content:center;
+    width:40px;height:40px;margin-right:0.75rem;
+    background:var(--surface2);border:1px solid var(--border);
+    border-radius:8px;color:var(--text2);font-size:1.25rem;
+    cursor:pointer;flex-shrink:0;
+  }
+  /* Modal full screen on mobile */
+  .modal-backdrop{padding:0;align-items:flex-end}
+  .modal{
+    max-width:100%;width:100%;
+    max-height:92vh;
+    border-radius:20px 20px 0 0;
+    padding:1.5rem;
+  }
+  /* Table horizontal scroll */
+  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table{min-width:600px}
+  .form-row{grid-template-columns:1fr}
+}
+
+@media(max-width:480px){
+  .stats-grid{grid-template-columns:1fr}
+  .section-header{flex-direction:column;align-items:flex-start;gap:0.75rem}
+  .btn-primary,.btn-secondary{width:100%;justify-content:center}
+  #toast{right:1rem;left:1rem;max-width:none;bottom:1rem}
+}
 </style>
 </head>
 <body>
@@ -332,6 +385,7 @@ tr:hover td{background:rgba(255,255,255,0.02)}
     <div class="sidebar-logo">
       <div class="logo-mark">A×D</div>
       <span>Alby by <em>Design</em></span>
+      <button id="mobile-nav-toggle" aria-label="Toggle navigation" onclick="toggleAdminNav()" style="display:none">☰</button>
     </div>
     <nav class="sidebar-nav">
       <div class="nav-item active" onclick="showPage('dashboard',this)">
@@ -737,8 +791,37 @@ const API = window.location.hostname === 'localhost' || window.location.hostname
   ? ''
   : 'https://alby-by-design-graphics.onrender.com';
 
+// ── MOBILE NAV ────────────────────────────────────────────────
+function toggleAdminNav() {
+  const nav = document.querySelector('.sidebar-nav');
+  nav.classList.toggle('mobile-open');
+}
+
+function closeMobileNav() {
+  document.querySelector('.sidebar-nav').classList.remove('mobile-open');
+}
+
+function initMobileNavToggle() {
+  const btn = document.getElementById('mobile-nav-toggle');
+  const isMobile = () => window.innerWidth <= 768;
+  btn.style.display = isMobile() ? 'flex' : 'none';
+  window.addEventListener('resize', () => {
+    btn.style.display = isMobile() ? 'flex' : 'none';
+    if (!isMobile()) closeMobileNav();
+  });
+  // Close nav when a nav item is tapped on mobile
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', () => { if (isMobile()) closeMobileNav(); });
+  });
+  // Close when tapping outside
+  document.addEventListener('click', e => {
+    if (isMobile() && !e.target.closest('#sidebar')) closeMobileNav();
+  });
+}
+
 // ── BOOT ──────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
+  initMobileNavToggle();
   if (token) {
     showApp();
   }

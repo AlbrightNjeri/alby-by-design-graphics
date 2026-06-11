@@ -556,6 +556,8 @@ max-width:320px;
 .toast-icon{color:var(--gold);margin-right:0.5rem}
 
 /* ===== RESPONSIVE ===== */
+
+/* ── Tablet: 1024px ── */
 @media(max-width:1024px){
 .work-grid{grid-template-columns:repeat(2,1fr)}
 .work-card.featured{grid-row:auto}
@@ -564,24 +566,125 @@ max-width:320px;
 .contact-inner{grid-template-columns:1fr;gap:3rem}
 .footer-inner{grid-template-columns:1fr 1fr;gap:2.5rem}
 }
+
+/* ── Mobile: 768px ── */
 @media(max-width:768px){
+/* Nav */
 .nav-links,.nav-cta{display:none}
 .nav-burger{display:flex}
+
+/* Hero */
 .hero-headline{font-size:clamp(2rem,8vw,3.5rem)}
+.hero-sub{font-size:1rem}
+
+/* FIX 4: Hero stats — wrap into 2-column grid so 3 stats don't squeeze */
+.hero-stats{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:1.5rem;
+  margin-top:3rem;
+}
+
+/* Work */
 .work-grid{grid-template-columns:1fr}
+.work-header{margin-bottom:3rem}
+
+/* FIX 3: About image — constrain and center when stacked */
 .about-inner{grid-template-columns:1fr;gap:3rem}
+.about-visual{max-width:420px;margin:0 auto}
+.about-accent-block{bottom:-1rem;right:-0.5rem;width:120px;height:120px}
+.about-accent-num{font-size:2rem}
+
+/* Services */
 .services-grid{grid-template-columns:1fr}
-.portfolio-grid{grid-template-columns:1fr}
+.service-card{padding:2rem}
+
+/* Portfolio */
+.portfolio-grid{grid-template-columns:repeat(2,1fr)}
+.portfolio-header{flex-direction:column;align-items:flex-start}
+
+/* Contact */
 .contact-inner{grid-template-columns:1fr}
 .form-row{grid-template-columns:1fr}
-.footer-inner{grid-template-columns:1fr;gap:2rem}
-.testimonial-card{width:300px}
-.hero-stats{gap:2rem}
+
+/* FIX 1: Testimonials — fluid card width + scroll snap */
+.testimonial-card{width:min(360px,82vw)}
+.testimonials-track{
+  scroll-snap-type:x mandatory;
+  -webkit-overflow-scrolling:touch;
+  padding-bottom:0.5rem;
 }
+
+/* FIX 5: Footer — full single column with tighter spacing */
+.footer-inner{grid-template-columns:1fr;gap:2rem}
+.footer-brand p{max-width:100%}
+.footer-bottom{flex-direction:column;align-items:flex-start;gap:1rem}
+}
+
+/* ── Small phones: 480px ── */
 @media(max-width:480px){
+/* Spacing */
 .container{padding:0 1.25rem}
-.hero-actions{flex-direction:column;align-items:flex-start}
+section{padding:5rem 0}
+#hero{padding:6rem 0 3rem}
+#work,#about,#services,#portfolio,#testimonials,#contact{padding:5rem 0}
+
+/* Buttons */
+.hero-actions{flex-direction:column;align-items:stretch}
 .btn-primary,.btn-secondary{width:100%;justify-content:center}
+
+/* Hero */
+.hero-stats{grid-template-columns:repeat(2,1fr);gap:1.25rem;margin-top:2.5rem}
+.hero-stat-num{font-size:1.6rem}
+.hero-badge{font-size:0.72rem}
+
+/* Work */
+.work-header{margin-bottom:2rem}
+
+/* FIX 3: About image — full width on very small screens */
+.about-visual{max-width:100%}
+.about-img-frame{aspect-ratio:4/3}
+.about-accent-block{display:none}
+
+/* Services */
+.service-card{padding:1.5rem}
+.services-header{margin-bottom:3rem}
+
+/* Portfolio */
+.portfolio-grid{grid-template-columns:1fr}
+.filter-bar{gap:0.35rem}
+.filter-btn{padding:0.35rem 0.85rem;font-size:0.75rem}
+
+/* FIX 1: Testimonials — near full-width cards on small phones */
+.testimonial-card{width:min(340px,90vw);padding:1.75rem}
+.testimonials-header{margin-bottom:3rem}
+
+/* FIX 2: Modal — full-screen on mobile, scrollable body */
+.modal-backdrop{padding:0;align-items:flex-end}
+.modal{
+  max-width:100%;
+  width:100%;
+  max-height:92vh;
+  border-radius:var(--radius-lg) var(--radius-lg) 0 0;
+  overflow-y:auto;
+}
+.modal-body{padding:1.5rem}
+.modal-title{font-size:1.35rem}
+.modal-meta{gap:1rem;flex-wrap:wrap}
+.modal-img{aspect-ratio:4/3}
+
+/* FIX 5: Footer */
+.footer-inner{gap:1.5rem}
+.footer-col{padding-bottom:0}
+.social-links{flex-wrap:wrap}
+
+/* Section headings */
+.section-heading{font-size:clamp(1.75rem,7vw,2.5rem)}
+}
+
+/* FIX 6: Cursor — hide on ANY touch/coarse pointer device */
+@media(hover:none),(pointer:coarse){
+.cursor,.cursor-ring{display:none !important}
 }
 
 /* ===== CURSOR ===== */
@@ -602,7 +705,6 @@ transition:width 0.4s,height 0.4s,border-color 0.2s;
 }
 body.cursor-hover .cursor{width:16px;height:16px;background:var(--gold)}
 body.cursor-hover .cursor-ring{width:52px;height:52px;border-color:rgba(224,165,59,0.6)}
-@media(hover:none){.cursor,.cursor-ring{display:none}}
 
 /* ===== VIDEO / MOTION CARDS ===== */
 .portfolio-item-play{
