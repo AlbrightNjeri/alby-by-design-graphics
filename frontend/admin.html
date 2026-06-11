@@ -909,6 +909,8 @@ function renderProjects(projects) {
       <div class="project-card-body">
         <div class="project-card-tag">${esc(p.category || 'Design')}${p.featured ? '<span class="badge-featured">Featured</span>' : ''}</div>
         <div class="project-card-title">${esc(p.title)}</div>
+        ${p.client_name ? `<div style="font-size:0.75rem;color:var(--text3);margin-top:0.2rem">Client: ${esc(p.client_name)}${p.project_year ? ' · ' + esc(p.project_year) : ''}</div>` : ''}
+        ${p.deliverables ? `<div style="font-size:0.72rem;color:var(--text3);margin-top:0.2rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${esc(p.deliverables)}">${esc(p.deliverables)}</div>` : ''}
         <div class="project-card-actions">
           <button class="btn-secondary btn-sm" onclick="editProject(${p.id})">Edit</button>
           <button class="btn-danger" onclick="confirmDelete(${p.id})">Delete</button>

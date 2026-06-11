@@ -10,9 +10,6 @@
 <meta property="og:description" content="Design that speaks before words do. Premium branding, social media design, and visual experiences.">
 <meta property="og:type" content="website">
 <meta name="robots" content="index, follow">
-<link rel="icon" href="/favicon.ico" />
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
-<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Montserrat:wght@300;400;500;600&family=Raleway:wght@300;400;500&display=swap" rel="stylesheet">
@@ -553,6 +550,30 @@ const _BASE = window.location.hostname === 'localhost' || window.location.hostna
           </div>
         </div>
       </article>`;
+    }).join('');
+  } catch (e) { /* keep hardcoded fallback */ }
+})();
+
+// ── Dynamic services: replace hardcoded cards if DB has entries ──
+(async function loadServicesPublic() {
+  try {
+    const res = await fetch(`${_BASE}/api/services`);
+    if (!res.ok) return;
+    const items = await res.json();
+    if (!Array.isArray(items) || items.length === 0) return;
+    const grid = document.getElementById('services-grid');
+    if (!grid) return;
+    grid.innerHTML = items.map((s, i) => {
+      const delay = i % 3 === 1 ? ' reveal-delay-1' : i % 3 === 2 ? ' reveal-delay-2' : '';
+      const itemsHtml = Array.isArray(s.items) && s.items.length
+        ? `<ul class="service-items" aria-label="${s.title.replace(/"/g,'&quot;')} services">${s.items.map(it => `<li>${it.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</li>`).join('')}</ul>`
+        : '';
+      return `<div class="service-card reveal${delay}">
+        <div class="service-icon" aria-hidden="true">${s.icon || '✦'}</div>
+        <h3>${s.title.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</h3>
+        ${s.description ? `<p>${s.description.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</p>` : ''}
+        ${itemsHtml}
+      </div>`;
     }).join('');
   } catch (e) { /* keep hardcoded fallback */ }
 })();

@@ -32,28 +32,36 @@ async function loadProjects() {
     if (res.ok) {
       const data = await res.json();
       if (Array.isArray(data) && data.length > 0) {
-        const TAG_LABELS = {
-          branding: 'Brand Identity', logos: 'Logo Design', social: 'Social Media',
-          posters: 'Poster Design', flyers: 'Flyer Design', marketing: 'Marketing Materials',
-          motion: 'Motion Graphics', video: 'Video Production'
-        };
         portfolioProjects = data.map(p => ({
           id: String(p.id),
           title: p.title,
-          category: p.category,
-          tag: TAG_LABELS[p.category] || (p.category ? p.category.charAt(0).toUpperCase() + p.category.slice(1) : 'Design'),
+          category: p.category || '',
+          tag: p.category
+            ? p.category.charAt(0).toUpperCase() + p.category.slice(1).replace(/-/g, ' ')
+            : 'Design',
           emoji: '✦',
           bg: 'ph-1',
           img: p.image_url || '',
           thumbnail: p.image_url || '',
+          // client_name and project_year are now persisted columns — read them directly
           client: p.client_name || p.title,
-          year: p.project_year || (p.created_at ? new Date(p.created_at).getFullYear().toString() : '2024'),
+          year: p.project_year
+            || (p.created_at ? new Date(p.created_at).getFullYear().toString() : '2024'),
           desc: p.description || '',
-          deliverables: p.deliverables ? (Array.isArray(p.deliverables) ? p.deliverables : p.deliverables.split(',').map(d => d.trim()).filter(Boolean)) : [],
+          // deliverables stored as a comma-separated string in the DB
+          deliverables: p.deliverables
+            ? (Array.isArray(p.deliverables)
+                ? p.deliverables
+                : p.deliverables.split(',').map(d => d.trim()).filter(Boolean))
+            : [],
           type: p.video_url ? 'video' : 'static',
           videoSrc: p.video_url || '',
-          videoType: p.video_url ? (p.video_url.includes('youtube') ? 'youtube' : p.video_url.includes('vimeo') ? 'vimeo' : 'mp4') : '',
-          project_url: p.project_url || ''
+          videoType: p.video_url
+            ? (p.video_url.includes('youtube') ? 'youtube'
+              : p.video_url.includes('vimeo') ? 'vimeo' : 'mp4')
+            : '',
+          project_url: p.project_url || '',
+          featured: !!p.featured,
         }));
       } else {
         portfolioProjects = portfolioProjectsFallback;
@@ -98,33 +106,49 @@ function renderPortfolio(filter='all', query='') {
   });
 }
 
-// ===== RENDER WORK GRID (Crafted With Purpose) =====
-function renderWorkGrid() {
+// ===== RENDER FEATURED WORK ("Crafted with Purpose") =====
+function renderFeaturedWork() {
   const grid = document.getElementById('work-grid');
   if (!grid) return;
-  // Featured first, then fill up to 6
+
+  // Show up to 6 items: featured first, then newest
   const featured = portfolioProjects.filter(p => p.featured);
-  const rest = portfolioProjects.filter(p => !p.featured);
-  const items = [...featured, ...rest].slice(0, 6);
-  if (items.length === 0) { grid.innerHTML = ''; return; }
-  grid.innerHTML = items.map(p => {
-    const imgSrc = p.img || p.thumbnail || '';
-    const imgHTML = imgSrc
-      ? `<img src="${imgSrc}" alt="${p.title}" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block;">`
-      : `<span style="font-size:2.5rem" aria-hidden="true">${p.emoji}</span>`;
-    const playBadge = p.type === 'video'
-      ? `<div class="portfolio-item-play" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24"><path d="M5 3l14 9-14 9V3z"/></svg></div>`
-      : '';
-    return `<div class="work-card reveal" role="listitem" tabindex="0" data-project="${p.id}" aria-label="View ${p.title} project"><div class="portfolio-item-inner ph-1" aria-hidden="true">${imgHTML}</div>${playBadge}<div class="portfolio-item-overlay"><h4>${p.title}</h4><span>${p.tag}</span></div></div>`;
+  const rest     = portfolioProjects.filter(p => !p.featured);
+  const display  = [...featured, ...rest].slice(0, 6);
+
+  if (display.length === 0) {
+    grid.innerHTML = '<p style="color:var(--text3);padding:2rem 0">No projects yet.</p>';
+    return;
+  }
+
+  const delayClass = (i) => i === 1 || i === 3 ? ' reveal-delay-1' : i === 2 || i === 4 ? ' reveal-delay-2' : '';
+
+  grid.innerHTML = display.map((p, i) => {
+    const imgHtml = p.img
+      ? `<img src="${p.img}" alt="${p.title} – ${p.tag} project by Alby by Design Graphics" loading="lazy" class="work-card-img" width="800" height="600">`
+      : `<div class="work-card-placeholder ${p.bg}" aria-hidden="true" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:3rem">${p.emoji}</div>`;
+    const featuredClass = i === 0 ? ' featured' : '';
+    return `<div class="work-card${featuredClass}${delayClass(i)} reveal" data-project="${p.id}" tabindex="0" role="button" aria-label="View ${p.title} project">
+      ${imgHtml}
+      <div class="work-card-border" aria-hidden="true"></div>
+      <div class="work-card-overlay">
+        <div class="work-card-tag">${p.tag}</div>
+        <div class="work-card-title">${p.title}</div>
+      </div>
+    </div>`;
   }).join('');
-  grid.querySelectorAll('.work-card').forEach(card => {
+
+  // Bind click/keyboard handlers
+  grid.querySelectorAll('[data-project]').forEach(card => {
     const id = card.getAttribute('data-project');
     card.addEventListener('click', () => openModal(id));
-    card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openModal(id); } });
+    card.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openModal(id); }
+    });
   });
 }
 
-// ===== MODAL =====
+
 function openModal(id) {
   const p = projectData[id];
   if (!p) return;
@@ -309,46 +333,14 @@ document.querySelectorAll('a,button,.work-card,.portfolio-item,.service-card,.sk
   el.addEventListener('mouseleave', () => document.body.classList.remove('cursor-hover'));
 });
 
-// ===== LOAD & RENDER SERVICES =====
-async function loadAndRenderServices() {
-  const grid = document.getElementById('services-grid');
-  if (!grid) return;
-  try {
-    const res = await fetch(`${BASE_URL}/api/services`);
-    if (!res.ok) return; // keep static fallback cards already in HTML
-    const data = await res.json();
-    if (!Array.isArray(data) || data.length === 0) return; // keep static fallback
-    grid.innerHTML = data.map((s, i) => {
-      const items = Array.isArray(s.items) ? s.items : [];
-      const delay = i === 0 ? '' : i === 1 ? ' reveal-delay-1' : ' reveal-delay-2';
-      return `<div class="service-card reveal${delay}">
-        <div class="service-icon" aria-hidden="true">${s.icon || '✦'}</div>
-        <h3>${s.title}</h3>
-        <p>${s.description || ''}</p>
-        ${items.length ? `<ul class="service-items" aria-label="${s.title} services">${items.map(it => `<li>${it}</li>`).join('')}</ul>` : ''}
-      </div>`;
-    }).join('');
-    // Re-observe reveals for new cards
-    grid.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
-  } catch (e) { /* keep static fallback */ }
-}
-
 // ===== LOADER =====
 window.addEventListener('load', async () => {
   await loadProjects();
-  // Bind Featured Work cards only after projectData is populated
-  document.querySelectorAll('[data-project]').forEach(card => {
-    if (card.closest('#portfolio-grid')) return;
-    const id = card.getAttribute('data-project');
-    card.addEventListener('click', () => openModal(id));
-    card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openModal(id); } });
-  });
   setTimeout(() => {
     document.getElementById('page-loader').classList.add('hidden');
+    renderFeaturedWork();   // populate "Crafted with Purpose" from live API data
     observeReveals();
     renderPortfolio();
-    renderWorkGrid();
-    loadAndRenderServices();
   }, 1300);
 });
 
