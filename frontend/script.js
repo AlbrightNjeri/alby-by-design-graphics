@@ -26,6 +26,21 @@ let portfolioProjects = [];
 const projectData = {};
 
 // ===== LOAD PROJECTS FROM API =====
+// Convert any YouTube/Vimeo URL into its embed form; leave R2/direct URLs untouched
+function resolveVideoSrc(url) {
+  if (!url) return '';
+  // youtu.be/ID  or  youtube.com/watch?v=ID  →  embed
+  const ytShort = url.match(/youtu\.be\/([A-Za-z0-9_-]{11})/);
+  const ytWatch = url.match(/youtube\.com\/watch\?(?:.*&)?v=([A-Za-z0-9_-]{11})/);
+  const ytId    = (ytShort || ytWatch || [])[1];
+  if (ytId) return `https://www.youtube.com/embed/${ytId}`;
+  // vimeo.com/ID  →  embed (already-embedded URLs pass through)
+  const vmMatch = url.match(/vimeo\.com\/(?!video\/)(\d+)/);
+  if (vmMatch) return `https://player.vimeo.com/video/${vmMatch[1]}`;
+  // Already an embed URL or a direct file URL — return as-is
+  return url;
+}
+
 async function loadProjects() {
   try {
     const res = await fetch(`${BASE_URL}/api/projects`);
@@ -55,10 +70,13 @@ async function loadProjects() {
                 : p.deliverables.split(',').map(d => d.trim()).filter(Boolean))
             : [],
           type: p.video_url ? 'video' : 'static',
-          videoSrc: p.video_url || '',
+          videoSrc: p.video_url
+            ? resolveVideoSrc(p.video_url)
+            : '',
           videoType: p.video_url
-            ? (p.video_url.includes('youtube') ? 'youtube'
-              : p.video_url.includes('vimeo') ? 'vimeo' : 'mp4')
+            ? (p.video_url.includes('youtube.com') || p.video_url.includes('youtu.be') ? 'youtube'
+              : p.video_url.includes('vimeo') ? 'vimeo'
+              : 'mp4')
             : '',
           project_url: p.project_url || '',
           featured: !!p.featured,

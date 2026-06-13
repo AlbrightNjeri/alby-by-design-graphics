@@ -9,15 +9,22 @@
 <meta property="og:title" content="Alby by Design Graphics">
 <meta property="og:description" content="Design that speaks before words do. Premium branding, social media design, and visual experiences.">
 <meta property="og:type" content="website">
+<meta property="og:image" content="images/favicon/og-image.png">
 <meta name="robots" content="index, follow">
 <meta name="google-site-verification" content="googled3bbcce78785e7cd" />
+<!-- ── Favicon / Tab Icon ── -->
+<link rel="icon" type="image/png" sizes="32x32"  href="images/favicon/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16"  href="images/favicon/favicon-16.png">
+<link rel="icon" type="image/x-icon"             href="images/favicon/favicon.ico">
+<link rel="apple-touch-icon" sizes="180x180"     href="images/favicon/apple-touch-icon.png">
+<link rel="manifest"                              href="site.webmanifest">
+<meta name="theme-color" content="#0d0d0d">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Montserrat:wght@300;400;500;600&family=Raleway:wght@300;400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-
 <!-- Page Loader -->
 <div id="page-loader" aria-hidden="true">
 <div class="loader-logo">A×D</div>
@@ -494,12 +501,57 @@ Send Message
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
 <script>
-// ── API base URL (works locally and on Netlify) ──
+// ── API base URL ──────────────────────────────────────────────
 const _BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
   ? ''
   : 'https://alby-by-design-graphics.onrender.com';
 
-// ── Dynamic logo: replace A×D marks with uploaded logo if one exists ──
+// ── Render cold-start handler ─────────────────────────────────
+// Render free tier spins down after 15 min of inactivity.
+// This pings /api/health, shows a friendly banner while waiting,
+// and removes it once the server responds (usually 20-40 seconds).
+(async function wakeRenderServer() {
+  const TIMEOUT_MS = 60000; // give Render up to 60s to wake
+  const POLL_MS    = 4000;
+
+  let banner = null;
+  // Only show banner if health check takes more than 2 seconds
+  const bannerTimer = setTimeout(() => {
+    banner = document.createElement('div');
+    banner.id = 'render-wake-banner';
+    banner.innerHTML = `
+      <span style="display:inline-block;margin-right:10px;animation:spin 1s linear infinite">⏳</span>
+      Server is waking up — this takes about 30 seconds on first visit. Content will load shortly.
+      <style>@keyframes spin{to{transform:rotate(360deg)}}</style>`;
+    Object.assign(banner.style, {
+      position:'fixed', bottom:'1.25rem', left:'50%', transform:'translateX(-50%)',
+      background:'rgba(30,30,30,0.95)', color:'#fff', padding:'0.75rem 1.5rem',
+      borderRadius:'50px', fontSize:'0.85rem', zIndex:'9999',
+      boxShadow:'0 4px 24px rgba(0,0,0,0.4)', backdropFilter:'blur(8px)',
+      border:'1px solid rgba(224,165,59,0.3)', whiteSpace:'nowrap',
+      maxWidth:'90vw', textAlign:'center',
+    });
+    document.body.appendChild(banner);
+  }, 2000);
+
+  const removeBanner = () => {
+    clearTimeout(bannerTimer);
+    if (banner) { banner.style.opacity = '0'; banner.style.transition = 'opacity 0.4s'; setTimeout(() => banner?.remove(), 400); }
+  };
+
+  const start = Date.now();
+  while (Date.now() - start < TIMEOUT_MS) {
+    try {
+      const r = await fetch(`${_BASE}/api/health`, { cache: 'no-store' });
+      if (r.ok) { removeBanner(); return; }
+    } catch (_) {}
+    await new Promise(r => setTimeout(r, POLL_MS));
+  }
+  // If still not up, update banner to suggest refreshing
+  if (banner) banner.innerHTML = '⚠️ Server is taking longer than usual. <a href="" style="color:var(--gold)">Refresh the page</a> to try again.';
+})();
+
+// ── Dynamic logo ──────────────────────────────────────────────
 (async function loadSiteLogo() {
   try {
     const res = await fetch(`${_BASE}/api/content/logo`);

@@ -503,15 +503,34 @@ tr:hover td{background:rgba(255,255,255,0.02)}
           <div class="form-group">
             <label>Project Image</label>
             <div class="upload-zone" id="upload-zone">
-              <input type="file" id="image-file" accept="image/jpeg,image/png,image/webp" onchange="handleFileSelect(this)">
+              <input type="file" id="image-file" accept="image/jpeg,image/png,image/webp,image/gif" onchange="handleFileSelect(this)">
               <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
               <p><strong>Click to upload</strong> or drag and drop</p>
-              <p style="font-size:0.75rem;margin-top:0.25rem">JPG, PNG, WEBP up to 10MB</p>
+              <p style="font-size:0.75rem;margin-top:0.25rem">JPG, PNG, WEBP, GIF up to 30MB</p>
             </div>
             <div class="upload-progress" id="upload-progress"><div class="upload-progress-bar" id="upload-bar"></div></div>
             <div class="upload-preview" id="upload-preview" style="display:none"></div>
             <input type="hidden" id="proj-image-url">
             <div id="upload-status" style="font-size:0.8rem;margin-top:0.5rem;color:var(--text3)"></div>
+          </div>
+          <div class="form-group">
+            <label>Project Video <span style="color:var(--text3);font-size:0.75rem;text-transform:none;font-weight:400">(upload MP4/WEBM directly OR paste a YouTube/Vimeo link below)</span></label>
+            <div class="upload-zone" id="video-upload-zone" style="border-color:rgba(224,165,59,0.2)">
+              <input type="file" id="video-file" accept="video/mp4,video/webm,video/quicktime,video/x-msvideo" onchange="handleVideoFileSelect(this)">
+              <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+              <p><strong>Click to upload video</strong> or drag and drop</p>
+              <p style="font-size:0.75rem;margin-top:0.25rem">MP4, WEBM, MOV up to 30MB</p>
+            </div>
+            <div class="upload-progress" id="video-upload-progress" style="display:none"><div class="upload-progress-bar" id="video-upload-bar"></div></div>
+            <div class="upload-preview" id="video-upload-preview" style="display:none"></div>
+            <div id="video-upload-status" style="font-size:0.8rem;margin-top:0.5rem;color:var(--text3)"></div>
+            <div style="margin-top:0.75rem;display:flex;align-items:center;gap:0.75rem">
+              <div style="flex:1;height:1px;background:var(--border)"></div>
+              <span style="font-size:0.75rem;color:var(--text3)">or paste a link</span>
+              <div style="flex:1;height:1px;background:var(--border)"></div>
+            </div>
+            <input type="url" id="proj-video" placeholder="https://youtube.com/... or https://vimeo.com/..." style="margin-top:0.75rem;width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:0.75rem 1rem;color:var(--text);font-size:0.9rem;outline:none;transition:border-color var(--transition)" onfocus="this.style.borderColor='var(--border-gold)'" onblur="this.style.borderColor='var(--border)'">
+            <input type="hidden" id="proj-video-url">
           </div>
           <div class="form-row">
             <div class="form-group">
@@ -531,10 +550,6 @@ tr:hover td{background:rgba(255,255,255,0.02)}
             <div class="form-group">
               <label>Project URL (optional)</label>
               <input type="url" id="proj-url" placeholder="https://...">
-            </div>
-            <div class="form-group">
-              <label>Video URL (optional)</label>
-              <input type="url" id="proj-video" placeholder="YouTube / Vimeo URL">
             </div>
           </div>
           <div class="form-group" style="display:flex;align-items:center;gap:0.75rem">
@@ -1014,13 +1029,32 @@ function editProject(id) {
   document.getElementById('proj-year').value = p.project_year || '';
   document.getElementById('proj-deliverables').value = Array.isArray(p.deliverables) ? p.deliverables.join(', ') : (p.deliverables || '');
   document.getElementById('proj-url').value = p.project_url || '';
-  document.getElementById('proj-video').value = p.video_url || '';
   document.getElementById('proj-featured').checked = !!p.featured;
   document.getElementById('project-form-title').textContent = 'Edit Project';
+
+  // Image preview
   if (p.image_url) {
     document.getElementById('upload-preview').innerHTML = `<img src="${esc(p.image_url)}" alt="preview">`;
     document.getElementById('upload-preview').style.display = 'block';
   }
+
+  // Video: R2 direct URL goes in hidden field; YouTube/Vimeo goes in text field
+  const isDirectVideo = p.video_url && /\.(mp4|webm|mov|avi)(\?|$)/i.test(p.video_url);
+  const isEmbedLink   = p.video_url && (p.video_url.includes('youtube') || p.video_url.includes('vimeo') || p.video_url.includes('youtu.be'));
+  document.getElementById('proj-video-url').value = isDirectVideo ? (p.video_url || '') : '';
+  document.getElementById('proj-video').value     = isEmbedLink   ? (p.video_url || '') : '';
+  const videoPreview = document.getElementById('video-upload-preview');
+  if (isDirectVideo) {
+    videoPreview.innerHTML = `<video controls preload="metadata" style="width:100%;border-radius:8px;max-height:200px;background:#000"><source src="${esc(p.video_url)}"></video><p style="font-size:0.75rem;color:var(--text3);margin-top:0.4rem">Existing video</p>`;
+    videoPreview.style.display = 'block';
+  } else if (isEmbedLink) {
+    videoPreview.innerHTML = `<p style="font-size:0.8rem;color:var(--gold);margin-top:0.4rem">🔗 ${esc(p.video_url)}</p>`;
+    videoPreview.style.display = 'block';
+  } else {
+    videoPreview.style.display = 'none';
+    videoPreview.innerHTML = '';
+  }
+
   showPage('add-project', document.querySelectorAll('.nav-item')[2]);
 }
 
@@ -1035,10 +1069,14 @@ function resetProjectForm() {
   document.getElementById('proj-deliverables').value = '';
   document.getElementById('proj-url').value = '';
   document.getElementById('proj-video').value = '';
+  document.getElementById('proj-video-url').value = '';
   document.getElementById('proj-featured').checked = false;
   document.getElementById('upload-preview').style.display = 'none';
   document.getElementById('upload-preview').innerHTML = '';
   document.getElementById('upload-status').textContent = '';
+  document.getElementById('video-upload-preview').style.display = 'none';
+  document.getElementById('video-upload-preview').innerHTML = '';
+  document.getElementById('video-upload-status').textContent = '';
   document.getElementById('project-form-title').textContent = 'Add New Project';
   document.getElementById('project-form-status').style.display = 'none';
 }
@@ -1063,7 +1101,9 @@ async function saveProject() {
     project_year: document.getElementById('proj-year').value.trim(),
     deliverables: document.getElementById('proj-deliverables').value.trim(),
     project_url: document.getElementById('proj-url').value.trim(),
-    video_url: document.getElementById('proj-video').value.trim(),
+    // Direct R2 upload takes precedence; falls back to YouTube/Vimeo text field
+    video_url: (document.getElementById('proj-video-url').value.trim()
+              || document.getElementById('proj-video').value.trim()),
     featured: document.getElementById('proj-featured').checked
   };
 
@@ -1119,6 +1159,61 @@ function handleFileSelect(input) {
   const file = input.files ? input.files[0] : input;
   if (!file) return;
   uploadImage(file);
+}
+
+// ── VIDEO FILE UPLOAD ──────────────────────────────────────────
+function handleVideoFileSelect(input) {
+  const file = input.files ? input.files[0] : input;
+  if (!file) return;
+  uploadVideoFile(file);
+}
+
+async function uploadVideoFile(file) {
+  const statusEl  = document.getElementById('video-upload-status');
+  const progressWrap = document.getElementById('video-upload-progress');
+  const progressBar  = document.getElementById('video-upload-bar');
+  const preview   = document.getElementById('video-upload-preview');
+
+  // Clear the YouTube/Vimeo field — direct upload takes precedence
+  document.getElementById('proj-video').value = '';
+
+  statusEl.style.color = 'var(--text3)';
+  statusEl.textContent = 'Uploading video…';
+  progressWrap.style.display = 'block';
+  progressBar.style.width = '20%';
+
+  const formData = new FormData();
+  formData.append('image', file); // backend field name is 'image' for all R2 uploads
+
+  try {
+    progressBar.style.width = '60%';
+    const res = await fetch(`${API}/api/upload`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData
+    });
+    progressBar.style.width = '100%';
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Video upload failed.');
+
+    // Store the R2 URL in the hidden field
+    document.getElementById('proj-video-url').value = data.url;
+
+    // Show a native video player preview
+    preview.innerHTML = `
+      <video controls preload="metadata" style="width:100%;border-radius:8px;max-height:200px;background:#000">
+        <source src="${data.url}" type="${file.type}">
+      </video>
+      <p style="font-size:0.75rem;color:var(--text3);margin-top:0.4rem">✓ ${file.name}</p>`;
+    preview.style.display = 'block';
+    statusEl.style.color = 'var(--green)';
+    statusEl.textContent = 'Video uploaded successfully.';
+    setTimeout(() => { progressWrap.style.display = 'none'; progressBar.style.width = '0'; }, 1000);
+  } catch (err) {
+    statusEl.style.color = 'var(--red)';
+    statusEl.textContent = err.message;
+    progressWrap.style.display = 'none';
+  }
 }
 
 async function uploadImage(file) {

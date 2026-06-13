@@ -26,8 +26,13 @@ const BUCKET = process.env.CLOUDFLARE_R2_BUCKET;
 const PUBLIC_URL = process.env.CLOUDFLARE_R2_PUBLIC_URL?.replace(/\/$/, '');
 
 // ── Multer: memory storage (no disk writes) ─────────────────────
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-const MAX_SIZE_MB   = 30;
+const ALLOWED_TYPES = [
+  // Images
+  'image/jpeg', 'image/png', 'image/webp', 'image/gif',
+  // Videos
+  'video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo',
+];
+const MAX_SIZE_MB = 200; // 30MB for images, 200MB ceiling covers short portfolio videos
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -36,7 +41,7 @@ const upload = multer({
     if (ALLOWED_TYPES.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error(`Unsupported file type: ${file.mimetype}. Allowed: JPEG, PNG, WEBP, GIF`));
+      cb(new Error(`Unsupported file type: ${file.mimetype}. Allowed: JPEG, PNG, WEBP, GIF, MP4, WEBM, MOV`));
     }
   },
 });
