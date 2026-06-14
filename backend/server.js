@@ -37,8 +37,15 @@ app.use(cors({
 }));
 
 // ── Body parsing ─────────────────────────────────────────────────
-app.use(express.json({ limit: '1mb' }));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// ── Upload timeout — give large video uploads up to 5 minutes ────
+app.use('/api/upload', (req, res, next) => {
+  req.setTimeout(300000); // 5 minutes
+  res.setTimeout(300000);
+  next();
+});
 
 // ── Static frontend ───────────────────────────────────────────────
 // Serve index.html + assets from the project root (one level up).

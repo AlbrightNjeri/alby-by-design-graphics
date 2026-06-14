@@ -467,7 +467,11 @@ Send Message
 <div id="project-modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-hidden="true">
 <div class="modal">
 <button class="modal-close" id="modal-close" aria-label="Close project details">×</button>
-<div class="modal-img" id="modal-img" aria-hidden="true"></div>
+<div id="modal-counter" style="position:absolute;top:1rem;left:1.25rem;font-size:0.78rem;color:rgba(255,255,255,0.85);z-index:10;background:rgba(0,0,0,0.5);padding:3px 10px;border-radius:20px;display:none"></div>
+<div id="modal-img" class="modal-img" aria-hidden="true"></div>
+<button id="modal-prev" onclick="modalPrev()" aria-label="Previous" style="display:none;position:absolute;top:calc(var(--modal-img-h,260px)/2);left:0.75rem;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,0.55);border:none;color:#fff;font-size:1.4rem;cursor:pointer;display:none;align-items:center;justify-content:center;z-index:10">‹</button>
+<button id="modal-next" onclick="modalNext()" aria-label="Next" style="display:none;position:absolute;top:calc(var(--modal-img-h,260px)/2);right:0.75rem;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,0.55);border:none;color:#fff;font-size:1.4rem;cursor:pointer;display:none;align-items:center;justify-content:center;z-index:10">›</button>
+<div id="modal-thumbs" class="modal-thumbs"></div>
 <div class="modal-body">
 <div class="modal-tag" id="modal-tag"></div>
 <h2 class="modal-title" id="modal-title"></h2>
@@ -496,6 +500,7 @@ Send Message
 </div>
 </div>
 </div>
+
 
 <!-- Toast Notification -->
 <div id="toast" class="toast" role="status" aria-live="polite"></div>

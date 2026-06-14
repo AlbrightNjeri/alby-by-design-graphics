@@ -751,3 +751,60 @@ transition:opacity 0.5s;
 .loader-bar{width:120px;height:2px;background:var(--surface3);border-radius:1px;overflow:hidden}
 .loader-fill{height:100%;background:var(--gold);border-radius:1px;animation:load 1.2s ease-out forwards}
 @keyframes load{from{width:0}to{width:100%}}
+/* ===== NETFLIX-STYLE CARD CYCLING ===== */
+.card-dots{
+  position:absolute;bottom:0.5rem;left:50%;transform:translateX(-50%);
+  display:flex;gap:4px;z-index:4;pointer-events:none;
+}
+.card-dot{
+  width:5px;height:5px;border-radius:50%;
+  background:rgba(255,255,255,0.4);transition:background 0.3s,transform 0.3s;
+}
+.card-dot.active{background:#fff;transform:scale(1.3)}
+
+.card-media-badge{
+  position:absolute;top:0.6rem;right:0.6rem;z-index:4;
+  background:rgba(0,0,0,0.6);color:#fff;
+  font-size:0.68rem;padding:3px 8px;border-radius:12px;
+  backdrop-filter:blur(4px);pointer-events:none;
+  border:1px solid rgba(255,255,255,0.15);
+}
+
+/* ===== MODAL GALLERY ===== */
+.modal-thumbs{
+  display:flex;gap:6px;padding:0.5rem 1.25rem;
+  overflow-x:auto;-webkit-overflow-scrolling:touch;
+  scroll-snap-type:x mandatory;
+  background:var(--surface);
+}
+.modal-thumbs:empty{display:none}
+.modal-thumb{
+  flex-shrink:0;width:56px;height:42px;
+  border-radius:6px;overflow:hidden;
+  border:2px solid transparent;cursor:pointer;
+  scroll-snap-align:start;background:var(--surface2);
+  transition:border-color 0.2s,opacity 0.2s;
+}
+.modal-thumb:hover{border-color:rgba(224,165,59,0.5);opacity:1!important}
+
+#modal-prev, #modal-next{
+  transition:background 0.2s,opacity 0.2s;
+}
+#modal-prev:hover, #modal-next:hover{
+  background:rgba(224,165,59,0.8)!important;
+}
+
+/* Image fits without stretching */
+.modal-img img{
+  width:100%;height:100%;
+  object-fit:contain!important;
+  display:block;
+}
+
+/* ===== RESPONSIVE: small screens ===== */
+@media(max-width:480px){
+  .modal-thumbs{padding:0.4rem 0.75rem}
+  .modal-thumb{width:44px;height:34px}
+  #modal-prev{left:0.35rem}
+  #modal-next{right:0.35rem}
+}

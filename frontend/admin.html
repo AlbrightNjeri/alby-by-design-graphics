@@ -500,38 +500,49 @@ tr:hover td{background:rgba(255,255,255,0.02)}
             <label>Description</label>
             <textarea id="proj-description" placeholder="Describe the project, challenge, and outcome..."></textarea>
           </div>
+
+          <!-- ── BULK MEDIA UPLOAD ─────────────────────────────────── -->
           <div class="form-group">
-            <label>Project Image</label>
-            <div class="upload-zone" id="upload-zone">
-              <input type="file" id="image-file" accept="image/jpeg,image/png,image/webp,image/gif" onchange="handleFileSelect(this)">
+            <label>Project Media <span style="color:var(--text3);font-size:0.75rem;text-transform:none;font-weight:400">— images and videos</span></label>
+
+            <!-- Drop zone: accepts images + videos, multiple -->
+            <div class="upload-zone" id="upload-zone" style="min-height:120px;position:relative">
+              <input type="file" id="bulk-media-file"
+                accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime"
+                multiple
+                onchange="handleBulkFileSelect(this)">
               <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-              <p><strong>Click to upload</strong> or drag and drop</p>
-              <p style="font-size:0.75rem;margin-top:0.25rem">JPG, PNG, WEBP, GIF up to 30MB</p>
+              <p><strong>Click to upload</strong> or drag &amp; drop</p>
+              <p style="font-size:0.75rem;margin-top:0.25rem">Images (JPG/PNG/WEBP/GIF) &amp; Videos (MP4/WEBM/MOV) · Select multiple files</p>
             </div>
-            <div class="upload-progress" id="upload-progress"><div class="upload-progress-bar" id="upload-bar"></div></div>
-            <div class="upload-preview" id="upload-preview" style="display:none"></div>
-            <input type="hidden" id="proj-image-url">
-            <div id="upload-status" style="font-size:0.8rem;margin-top:0.5rem;color:var(--text3)"></div>
-          </div>
-          <div class="form-group">
-            <label>Project Video <span style="color:var(--text3);font-size:0.75rem;text-transform:none;font-weight:400">(upload MP4/WEBM directly OR paste a YouTube/Vimeo link below)</span></label>
-            <div class="upload-zone" id="video-upload-zone" style="border-color:rgba(224,165,59,0.2)">
-              <input type="file" id="video-file" accept="video/mp4,video/webm,video/quicktime,video/x-msvideo" onchange="handleVideoFileSelect(this)">
-              <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
-              <p><strong>Click to upload video</strong> or drag and drop</p>
-              <p style="font-size:0.75rem;margin-top:0.25rem">MP4, WEBM, MOV up to 30MB</p>
-            </div>
-            <div class="upload-progress" id="video-upload-progress" style="display:none"><div class="upload-progress-bar" id="video-upload-bar"></div></div>
-            <div class="upload-preview" id="video-upload-preview" style="display:none"></div>
-            <div id="video-upload-status" style="font-size:0.8rem;margin-top:0.5rem;color:var(--text3)"></div>
+
+            <!-- Per-file upload queue -->
+            <div id="upload-queue" style="margin-top:0.75rem;display:flex;flex-direction:column;gap:0.5rem"></div>
+
+            <!-- Gallery grid of successfully uploaded media -->
+            <div id="media-gallery-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:0.5rem;margin-top:0.75rem"></div>
+
+            <!-- YouTube/Vimeo embed link -->
             <div style="margin-top:0.75rem;display:flex;align-items:center;gap:0.75rem">
               <div style="flex:1;height:1px;background:var(--border)"></div>
-              <span style="font-size:0.75rem;color:var(--text3)">or paste a link</span>
+              <span style="font-size:0.75rem;color:var(--text3)">or add a video link</span>
               <div style="flex:1;height:1px;background:var(--border)"></div>
             </div>
-            <input type="url" id="proj-video" placeholder="https://youtube.com/... or https://vimeo.com/..." style="margin-top:0.75rem;width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:0.75rem 1rem;color:var(--text);font-size:0.9rem;outline:none;transition:border-color var(--transition)" onfocus="this.style.borderColor='var(--border-gold)'" onblur="this.style.borderColor='var(--border)'">
+            <div style="display:flex;gap:0.5rem;margin-top:0.75rem">
+              <input type="url" id="proj-video" placeholder="https://youtube.com/... or https://vimeo.com/..."
+                style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:0.75rem 1rem;color:var(--text);font-size:0.9rem;outline:none;transition:border-color var(--transition)"
+                onfocus="this.style.borderColor='var(--border-gold)'"
+                onblur="this.style.borderColor='var(--border)'">
+              <button type="button" onclick="addEmbedLink()" style="padding:0.75rem 1rem;background:var(--surface2);border:1px solid var(--border-gold);border-radius:10px;color:var(--gold);font-size:0.85rem;cursor:pointer;white-space:nowrap">Add Link</button>
+            </div>
+
+            <!-- Hidden fields for legacy single-image compat -->
+            <input type="hidden" id="proj-image-url">
             <input type="hidden" id="proj-video-url">
+            <div id="upload-status" style="font-size:0.8rem;margin-top:0.5rem;color:var(--text3)"></div>
           </div>
+          <!-- ── END BULK MEDIA UPLOAD ──────────────────────────────── -->
+
           <div class="form-row">
             <div class="form-group">
               <label>Client / Brand Name</label>
@@ -798,6 +809,35 @@ tr:hover td{background:rgba(255,255,255,0.02)}
 // ── STATE ──────────────────────────────────────────────────────
 let token = localStorage.getItem('axd_token') || '';
 let adminEmail = localStorage.getItem('axd_email') || '';
+
+// ── Authenticated fetch wrapper ────────────────────────────────
+// Catches 401 (token expired) and redirects to login gracefully.
+// For large uploads, extends the default fetch with a longer timeout.
+async function authFetch(url, opts = {}, timeoutMs = 300000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, {
+      ...opts,
+      signal: controller.signal,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...(opts.headers || {}),
+      },
+    });
+    clearTimeout(timer);
+    if (res.status === 401) {
+      showToast('Session expired — please log in again.', 'error');
+      doLogout();
+      throw new Error('Session expired. Please log in again.');
+    }
+    return res;
+  } catch (err) {
+    clearTimeout(timer);
+    if (err.name === 'AbortError') throw new Error('Upload timed out. Try a smaller file or check your connection.');
+    throw err;
+  }
+}
 let allProjects = [];
 let allInquiries = [];
 let pendingDeleteId = null;
@@ -1020,41 +1060,44 @@ function renderProjects(projects) {
 function editProject(id) {
   const p = allProjects.find(x => x.id === id);
   if (!p) return;
+
+  // Reset state
+  currentProjectMedia = [];
+  currentProjectId    = p.id;
+
   document.getElementById('edit-project-id').value = p.id;
-  document.getElementById('proj-title').value = p.title || '';
-  document.getElementById('proj-category').value = p.category || '';
+  document.getElementById('proj-title').value       = p.title || '';
+  document.getElementById('proj-category').value    = p.category || '';
   document.getElementById('proj-description').value = p.description || '';
-  document.getElementById('proj-image-url').value = p.image_url || '';
-  document.getElementById('proj-client').value = p.client_name || '';
-  document.getElementById('proj-year').value = p.project_year || '';
-  document.getElementById('proj-deliverables').value = Array.isArray(p.deliverables) ? p.deliverables.join(', ') : (p.deliverables || '');
-  document.getElementById('proj-url').value = p.project_url || '';
-  document.getElementById('proj-featured').checked = !!p.featured;
+  document.getElementById('proj-image-url').value   = p.thumbnail_url || p.image_url || '';
+  document.getElementById('proj-client').value      = p.client_name || '';
+  document.getElementById('proj-year').value        = p.project_year || '';
+  document.getElementById('proj-deliverables').value = Array.isArray(p.deliverables)
+    ? p.deliverables.join(', ') : (p.deliverables || '');
+  document.getElementById('proj-url').value         = p.project_url || '';
+  document.getElementById('proj-featured').checked  = !!p.featured;
   document.getElementById('project-form-title').textContent = 'Edit Project';
+  document.getElementById('upload-queue').innerHTML = '';
 
-  // Image preview
-  if (p.image_url) {
-    document.getElementById('upload-preview').innerHTML = `<img src="${esc(p.image_url)}" alt="preview">`;
-    document.getElementById('upload-preview').style.display = 'block';
+  // Populate gallery from project.media array (returned by API)
+  const mediaArr = Array.isArray(p.media) ? p.media : [];
+  currentProjectMedia = mediaArr.map(m => ({
+    url: m.url, key: m.storage_key, type: m.media_type,
+    mime: m.mime_type, name: m.url.split('/').pop(),
+    isThumbnail: !!m.is_thumbnail, dbId: m.id,
+  }));
+
+  // If no media array but legacy image_url exists, seed it
+  if (!currentProjectMedia.length && (p.image_url || p.thumbnail_url)) {
+    const url = p.thumbnail_url || p.image_url;
+    currentProjectMedia.push({ url, key: null, type: 'image', mime: 'image/jpeg', name: url.split('/').pop(), isThumbnail: true });
+  }
+  if (!currentProjectMedia.length && p.video_url) {
+    const isEmbed = p.video_url.includes('youtube') || p.video_url.includes('vimeo') || p.video_url.includes('youtu.be');
+    currentProjectMedia.push({ url: p.video_url, key: null, type: 'video', mime: isEmbed ? 'embed' : 'video/mp4', name: p.video_url, isThumbnail: false });
   }
 
-  // Video: R2 direct URL goes in hidden field; YouTube/Vimeo goes in text field
-  const isDirectVideo = p.video_url && /\.(mp4|webm|mov|avi)(\?|$)/i.test(p.video_url);
-  const isEmbedLink   = p.video_url && (p.video_url.includes('youtube') || p.video_url.includes('vimeo') || p.video_url.includes('youtu.be'));
-  document.getElementById('proj-video-url').value = isDirectVideo ? (p.video_url || '') : '';
-  document.getElementById('proj-video').value     = isEmbedLink   ? (p.video_url || '') : '';
-  const videoPreview = document.getElementById('video-upload-preview');
-  if (isDirectVideo) {
-    videoPreview.innerHTML = `<video controls preload="metadata" style="width:100%;border-radius:8px;max-height:200px;background:#000"><source src="${esc(p.video_url)}"></video><p style="font-size:0.75rem;color:var(--text3);margin-top:0.4rem">Existing video</p>`;
-    videoPreview.style.display = 'block';
-  } else if (isEmbedLink) {
-    videoPreview.innerHTML = `<p style="font-size:0.8rem;color:var(--gold);margin-top:0.4rem">🔗 ${esc(p.video_url)}</p>`;
-    videoPreview.style.display = 'block';
-  } else {
-    videoPreview.style.display = 'none';
-    videoPreview.innerHTML = '';
-  }
-
+  renderMediaGalleryGrid();
   showPage('add-project', document.querySelectorAll('.nav-item')[2]);
 }
 
@@ -1071,14 +1114,13 @@ function resetProjectForm() {
   document.getElementById('proj-video').value = '';
   document.getElementById('proj-video-url').value = '';
   document.getElementById('proj-featured').checked = false;
-  document.getElementById('upload-preview').style.display = 'none';
-  document.getElementById('upload-preview').innerHTML = '';
+  document.getElementById('upload-queue').innerHTML = '';
+  document.getElementById('media-gallery-grid').innerHTML = '';
   document.getElementById('upload-status').textContent = '';
-  document.getElementById('video-upload-preview').style.display = 'none';
-  document.getElementById('video-upload-preview').innerHTML = '';
-  document.getElementById('video-upload-status').textContent = '';
   document.getElementById('project-form-title').textContent = 'Add New Project';
   document.getElementById('project-form-status').style.display = 'none';
+  currentProjectMedia = [];
+  currentProjectId    = null;
 }
 
 async function saveProject() {
@@ -1094,17 +1136,16 @@ async function saveProject() {
 
   const body = {
     title,
-    category: document.getElementById('proj-category').value,
-    description: document.getElementById('proj-description').value.trim(),
-    image_url: document.getElementById('proj-image-url').value,
-    client_name: document.getElementById('proj-client').value.trim(),
+    category:     document.getElementById('proj-category').value,
+    description:  document.getElementById('proj-description').value.trim(),
+    image_url:    document.getElementById('proj-image-url').value,
+    thumbnail_url: document.getElementById('proj-image-url').value,
+    client_name:  document.getElementById('proj-client').value.trim(),
     project_year: document.getElementById('proj-year').value.trim(),
     deliverables: document.getElementById('proj-deliverables').value.trim(),
-    project_url: document.getElementById('proj-url').value.trim(),
-    // Direct R2 upload takes precedence; falls back to YouTube/Vimeo text field
-    video_url: (document.getElementById('proj-video-url').value.trim()
-              || document.getElementById('proj-video').value.trim()),
-    featured: document.getElementById('proj-featured').checked
+    project_url:  document.getElementById('proj-url').value.trim(),
+    video_url:    document.getElementById('proj-video').value.trim() || null,
+    featured:     document.getElementById('proj-featured').checked
   };
 
   const btn = document.getElementById('save-project-btn');
@@ -1112,16 +1153,26 @@ async function saveProject() {
   btn.disabled = true;
 
   try {
-    const url = id ? `${API}/api/projects/${id}` : `${API}/api/projects`;
+    const url    = id ? `${API}/api/projects/${id}` : `${API}/api/projects`;
     const method = id ? 'PUT' : 'POST';
-    const res = await fetch(url, {
+    const res    = await authFetch(url, {
       method,
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify(body)
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Save failed.');
-    showToast(id ? 'Project updated!' : 'Project added!', 'success');
+
+    const projectId = data.id;
+    currentProjectId = projectId;
+
+    // Save any queued media items not yet persisted (new project scenario)
+    const unpersisted = currentProjectMedia.filter(m => !m.dbId);
+    for (let i = 0; i < unpersisted.length; i++) {
+      await saveMediaToProject(projectId, unpersisted[i]);
+    }
+
+    showToast(id ? 'Project updated!' : 'Project created!', 'success');
     resetProjectForm();
     showPage('projects', document.querySelectorAll('.nav-item')[1]);
   } catch (err) {
@@ -1155,102 +1206,201 @@ async function deleteProject(id) {
 }
 
 // ── IMAGE UPLOAD ───────────────────────────────────────────────
-function handleFileSelect(input) {
-  const file = input.files ? input.files[0] : input;
-  if (!file) return;
-  uploadImage(file);
+// ── BULK MEDIA UPLOAD SYSTEM ───────────────────────────────────
+// Tracks all media attached to the current project being edited.
+// Each item: { url, key, type:'image'|'video', mime, name, isThumbnail }
+let currentProjectMedia = [];
+let currentProjectId    = null; // set when editing an existing project
+
+function handleBulkFileSelect(input) {
+  const files = Array.from(input.files || []);
+  if (!files.length) return;
+  // Deduplicate by name+size
+  const existing = new Set(currentProjectMedia.map(m => m.name + m.size));
+  const newFiles = files.filter(f => !existing.has(f.name + f.size));
+  if (newFiles.length < files.length) {
+    document.getElementById('upload-status').textContent =
+      `${files.length - newFiles.length} duplicate(s) skipped.`;
+  }
+  // Queue each file sequentially to avoid overwhelming the server
+  uploadFilesSequentially(newFiles);
+  input.value = ''; // reset so same file can be re-selected if needed
 }
 
-// ── VIDEO FILE UPLOAD ──────────────────────────────────────────
-function handleVideoFileSelect(input) {
-  const file = input.files ? input.files[0] : input;
-  if (!file) return;
-  uploadVideoFile(file);
-}
-
-async function uploadVideoFile(file) {
-  const statusEl  = document.getElementById('video-upload-status');
-  const progressWrap = document.getElementById('video-upload-progress');
-  const progressBar  = document.getElementById('video-upload-bar');
-  const preview   = document.getElementById('video-upload-preview');
-
-  // Clear the YouTube/Vimeo field — direct upload takes precedence
-  document.getElementById('proj-video').value = '';
-
-  statusEl.style.color = 'var(--text3)';
-  statusEl.textContent = 'Uploading video…';
-  progressWrap.style.display = 'block';
-  progressBar.style.width = '20%';
-
-  const formData = new FormData();
-  formData.append('image', file); // backend field name is 'image' for all R2 uploads
-
-  try {
-    progressBar.style.width = '60%';
-    const res = await fetch(`${API}/api/upload`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
-      body: formData
-    });
-    progressBar.style.width = '100%';
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Video upload failed.');
-
-    // Store the R2 URL in the hidden field
-    document.getElementById('proj-video-url').value = data.url;
-
-    // Show a native video player preview
-    preview.innerHTML = `
-      <video controls preload="metadata" style="width:100%;border-radius:8px;max-height:200px;background:#000">
-        <source src="${data.url}" type="${file.type}">
-      </video>
-      <p style="font-size:0.75rem;color:var(--text3);margin-top:0.4rem">✓ ${file.name}</p>`;
-    preview.style.display = 'block';
-    statusEl.style.color = 'var(--green)';
-    statusEl.textContent = 'Video uploaded successfully.';
-    setTimeout(() => { progressWrap.style.display = 'none'; progressBar.style.width = '0'; }, 1000);
-  } catch (err) {
-    statusEl.style.color = 'var(--red)';
-    statusEl.textContent = err.message;
-    progressWrap.style.display = 'none';
+async function uploadFilesSequentially(files) {
+  for (const file of files) {
+    const isVideo = file.type.startsWith('video/');
+    await uploadSingleFile(file, isVideo ? 'video' : 'image');
   }
 }
 
-async function uploadImage(file) {
+async function uploadSingleFile(file, mediaType) {
+  const queue    = document.getElementById('upload-queue');
   const statusEl = document.getElementById('upload-status');
-  const progressWrap = document.getElementById('upload-progress');
-  const progressBar = document.getElementById('upload-bar');
-  const preview = document.getElementById('upload-preview');
 
-  statusEl.textContent = 'Uploading...';
-  progressWrap.style.display = 'block';
-  progressBar.style.width = '30%';
+  // Create a per-file progress row
+  const rowId  = 'uq-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+  const row    = document.createElement('div');
+  row.id       = rowId;
+  row.style.cssText = 'display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0.75rem;background:var(--surface2);border-radius:8px;font-size:0.8rem';
+  row.innerHTML = `
+    <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2)">${esc(file.name)}</span>
+    <span style="font-size:0.7rem;color:var(--text3)">${(file.size/1024/1024).toFixed(1)}MB</span>
+    <div style="width:80px;height:4px;background:var(--border);border-radius:2px;overflow:hidden">
+      <div id="${rowId}-bar" style="height:100%;background:var(--gold);width:5%;transition:width 0.3s ease;border-radius:2px"></div>
+    </div>
+    <span id="${rowId}-status" style="color:var(--text3);min-width:48px;text-align:right">…</span>`;
+  queue.appendChild(row);
+
+  const bar    = document.getElementById(`${rowId}-bar`);
+  const status = document.getElementById(`${rowId}-status`);
+
+  // Animate the bar during upload
+  let pct = 5;
+  const timer = setInterval(() => {
+    pct = Math.min(pct + (mediaType === 'video' ? 2 : 8), 88);
+    bar.style.width = pct + '%';
+  }, 600);
 
   const formData = new FormData();
   formData.append('image', file);
 
   try {
-    progressBar.style.width = '60%';
-    const res = await fetch(`${API}/api/upload`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
-      body: formData
-    });
-    progressBar.style.width = '100%';
+    const timeoutMs = mediaType === 'video' ? 300000 : 60000;
+    const res  = await authFetch(`${API}/api/upload`, { method: 'POST', body: formData }, timeoutMs);
+    clearInterval(timer);
+    bar.style.width = '100%';
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Upload failed.');
-    document.getElementById('proj-image-url').value = data.url;
-    preview.innerHTML = `<img src="${data.url}" alt="preview">`;
-    preview.style.display = 'block';
-    statusEl.style.color = 'var(--green)';
-    statusEl.textContent = 'Image uploaded successfully.';
-    setTimeout(() => { progressWrap.style.display = 'none'; progressBar.style.width = '0'; }, 1000);
+
+    status.style.color = '#4ade80';
+    status.textContent = '✓';
+
+    const mediaItem = { url: data.url, key: data.key, type: mediaType, mime: file.type, name: file.name, size: file.size, isThumbnail: false };
+    currentProjectMedia.push(mediaItem);
+
+    // First image becomes the cover/thumbnail automatically
+    if (mediaType === 'image' && !currentProjectMedia.find(m => m.isThumbnail)) {
+      mediaItem.isThumbnail = true;
+      document.getElementById('proj-image-url').value = data.url;
+    }
+
+    renderMediaGalleryGrid();
+    // Fade out the queue row after a moment
+    setTimeout(() => { row.style.opacity = '0'; row.style.transition = 'opacity 0.4s'; setTimeout(() => row.remove(), 400); }, 2000);
+
+    // If editing an existing saved project, save media to DB immediately
+    if (currentProjectId) {
+      await saveMediaToProject(currentProjectId, mediaItem);
+    }
   } catch (err) {
-    statusEl.style.color = 'var(--red)';
-    statusEl.textContent = err.message;
-    progressWrap.style.display = 'none';
+    clearInterval(timer);
+    bar.style.background = '#f87171';
+    bar.style.width = '100%';
+    status.style.color = '#f87171';
+    status.textContent = '✗';
+    row.title = err.message;
+    statusEl.textContent = `Failed: ${file.name} — ${err.message}`;
+    statusEl.style.color = 'var(--red,#f87171)';
   }
 }
+
+async function saveMediaToProject(projectId, item) {
+  try {
+    await authFetch(`${API}/api/projects/${projectId}/media`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        url: item.url,
+        storage_key: item.key,
+        media_type: item.type,
+        mime_type: item.mime,
+        sort_order: currentProjectMedia.indexOf(item),
+        is_thumbnail: item.isThumbnail,
+      }),
+    });
+  } catch (err) {
+    console.error('[saveMediaToProject]', err.message);
+  }
+}
+
+async function addEmbedLink() {
+  const input = document.getElementById('proj-video');
+  const url   = input.value.trim();
+  if (!url) return;
+  // Validate it looks like a YouTube or Vimeo URL
+  if (!url.includes('youtube') && !url.includes('youtu.be') && !url.includes('vimeo')) {
+    showToast('Please enter a YouTube or Vimeo URL.', 'error'); return;
+  }
+  const item = { url, key: null, type: 'video', mime: 'embed', name: url, isThumbnail: false };
+  currentProjectMedia.push(item);
+  renderMediaGalleryGrid();
+  input.value = '';
+  if (currentProjectId) await saveMediaToProject(currentProjectId, item);
+}
+
+function renderMediaGalleryGrid() {
+  const grid = document.getElementById('media-gallery-grid');
+  if (!currentProjectMedia.length) { grid.innerHTML = ''; return; }
+
+  grid.innerHTML = currentProjectMedia.map((item, i) => {
+    const isThumb = item.isThumbnail;
+    const thumb   = item.type === 'image'
+      ? `<img src="${esc(item.url)}" style="width:100%;height:80px;object-fit:cover;border-radius:6px 6px 0 0">`
+      : item.mime === 'embed'
+        ? `<div style="width:100%;height:80px;background:var(--surface);display:flex;align-items:center;justify-content:center;border-radius:6px 6px 0 0;font-size:1.5rem">🔗</div>`
+        : `<div style="width:100%;height:80px;background:#000;display:flex;align-items:center;justify-content:center;border-radius:6px 6px 0 0;font-size:1.5rem">▶</div>`;
+    return `
+      <div style="border:2px solid ${isThumb ? 'var(--gold)' : 'var(--border)'};border-radius:8px;overflow:hidden;position:relative">
+        ${thumb}
+        <div style="padding:4px 6px;background:var(--surface2);display:flex;gap:4px;align-items:center">
+          <button type="button" title="Set as thumbnail" onclick="setGalleryThumbnail(${i})"
+            style="font-size:0.65rem;padding:2px 5px;border-radius:4px;cursor:pointer;border:1px solid ${isThumb ? 'var(--gold)' : 'var(--border)'};background:${isThumb ? 'var(--gold)' : 'transparent'};color:${isThumb ? '#000' : 'var(--text3)'}">
+            ${isThumb ? '★ Cover' : '☆'}
+          </button>
+          <button type="button" title="Remove" onclick="removeGalleryItem(${i})"
+            style="margin-left:auto;font-size:0.65rem;padding:2px 5px;border-radius:4px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--red,#f87171)">✕</button>
+        </div>
+      </div>`;
+  }).join('');
+
+  // Update media count display
+  const images = currentProjectMedia.filter(m => m.type === 'image').length;
+  const videos = currentProjectMedia.filter(m => m.type === 'video').length;
+  document.getElementById('upload-status').style.color = 'var(--text3)';
+  document.getElementById('upload-status').textContent =
+    currentProjectMedia.length ? `📷 ${images} image${images !== 1 ? 's' : ''} · 🎬 ${videos} video${videos !== 1 ? 's' : ''}` : '';
+}
+
+function setGalleryThumbnail(index) {
+  currentProjectMedia.forEach((m, i) => { m.isThumbnail = i === index; });
+  const thumb = currentProjectMedia[index];
+  document.getElementById('proj-image-url').value = thumb.type === 'image' ? thumb.url : '';
+  renderMediaGalleryGrid();
+}
+
+function removeGalleryItem(index) {
+  const item = currentProjectMedia[index];
+  if (item.isThumbnail && currentProjectMedia.length > 1) {
+    // Promote the next image as thumbnail
+    const nextImg = currentProjectMedia.find((m, i) => i !== index && m.type === 'image');
+    if (nextImg) { nextImg.isThumbnail = true; document.getElementById('proj-image-url').value = nextImg.url; }
+  }
+  currentProjectMedia.splice(index, 1);
+  renderMediaGalleryGrid();
+}
+
+// Legacy single-file helpers (kept for About/Logo upload compatibility)
+function handleFileSelect(input) {
+  const file = input.files ? input.files[0] : input;
+  if (file) uploadSingleFile(file, 'image');
+}
+function handleVideoFileSelect(input) {
+  const file = input.files ? input.files[0] : input;
+  if (file) uploadSingleFile(file, 'video');
+}
+async function uploadImage(file) { await uploadSingleFile(file, 'image'); }
+async function uploadVideoFile(file) { await uploadSingleFile(file, 'video'); }
 
 // ── INQUIRIES ─────────────────────────────────────────────────
 async function loadInquiries() {
