@@ -1020,11 +1020,16 @@ function renderProjects(projects) {
 function editProject(id) {
   const p = allProjects.find(x => x.id === id);
   if (!p) return;
+
+  // Reset collected media then seed from existing project data
+  collectedImageUrls = [];
+  collectedVideoUrls = [];
+
   document.getElementById('edit-project-id').value = p.id;
   document.getElementById('proj-title').value = p.title || '';
   document.getElementById('proj-category').value = p.category || '';
   document.getElementById('proj-description').value = p.description || '';
-  document.getElementById('proj-image-url').value = p.image_url || '';
+  document.getElementById('proj-image-url').value = p.image_url || p.thumbnail_url || '';
   document.getElementById('proj-client').value = p.client_name || '';
   document.getElementById('proj-year').value = p.project_year || '';
   document.getElementById('proj-deliverables').value = Array.isArray(p.deliverables) ? p.deliverables.join(', ') : (p.deliverables || '');
@@ -1032,23 +1037,51 @@ function editProject(id) {
   document.getElementById('proj-featured').checked = !!p.featured;
   document.getElementById('project-form-title').textContent = 'Edit Project';
 
-  // Image preview
-  if (p.image_url) {
-    document.getElementById('upload-preview').innerHTML = `<img src="${esc(p.image_url)}" alt="preview">`;
-    document.getElementById('upload-preview').style.display = 'block';
+  // Seed collected arrays from existing project_media (returned by API)
+  const existingMedia = Array.isArray(p.media) ? p.media : [];
+  existingMedia.forEach(m => {
+    if (m.media_type === 'video') {
+      collectedVideoUrls.push({ url: m.url, key: m.storage_key || null, mime: m.mime_type || 'video/mp4' });
+    } else {
+      collectedImageUrls.push({ url: m.url, key: m.storage_key || null });
+    }
+  });
+
+  // Also seed from legacy fields if no media array
+  if (!existingMedia.length) {
+    if (p.image_url) collectedImageUrls.push({ url: p.image_url, key: null });
+    if (p.video_url) collectedVideoUrls.push({ url: p.video_url, key: null, mime: 'video/mp4' });
   }
 
-  // Video: R2 direct URL goes in hidden field; YouTube/Vimeo goes in text field
-  const isDirectVideo = p.video_url && /\.(mp4|webm|mov|avi)(\?|$)/i.test(p.video_url);
-  const isEmbedLink   = p.video_url && (p.video_url.includes('youtube') || p.video_url.includes('vimeo') || p.video_url.includes('youtu.be'));
-  document.getElementById('proj-video-url').value = isDirectVideo ? (p.video_url || '') : '';
-  document.getElementById('proj-video').value     = isEmbedLink   ? (p.video_url || '') : '';
+  // Image preview — show all existing images as thumbnails
+  const imagePreview = document.getElementById('upload-preview');
+  const imageUrls = existingMedia.filter(m => m.media_type !== 'video').map(m => m.url);
+  if (!imageUrls.length && p.image_url) imageUrls.push(p.image_url);
+  if (imageUrls.length) {
+    imagePreview.innerHTML = imageUrls.map(url =>
+      `<img src="${esc(url)}" alt="preview" style="width:72px;height:54px;object-fit:cover;border-radius:6px;margin:0 4px 4px 0;border:1px solid var(--border)">`
+    ).join('');
+    imagePreview.style.display = 'block';
+  }
+
+  // Video preview — show all existing videos
   const videoPreview = document.getElementById('video-upload-preview');
-  if (isDirectVideo) {
-    videoPreview.innerHTML = `<video controls preload="metadata" style="width:100%;border-radius:8px;max-height:200px;background:#000"><source src="${esc(p.video_url)}"></video><p style="font-size:0.75rem;color:var(--text3);margin-top:0.4rem">Existing video</p>`;
-    videoPreview.style.display = 'block';
-  } else if (isEmbedLink) {
-    videoPreview.innerHTML = `<p style="font-size:0.8rem;color:var(--gold);margin-top:0.4rem">🔗 ${esc(p.video_url)}</p>`;
+  const videoItems = existingMedia.filter(m => m.media_type === 'video');
+  if (!videoItems.length && p.video_url) {
+    const isEmbed = p.video_url.includes('youtube') || p.video_url.includes('vimeo') || p.video_url.includes('youtu.be');
+    if (isEmbed) {
+      document.getElementById('proj-video').value = p.video_url;
+      videoPreview.innerHTML = `<p style="font-size:0.8rem;color:var(--gold);margin-top:0.4rem">🔗 ${esc(p.video_url)}</p>`;
+      videoPreview.style.display = 'block';
+    } else {
+      document.getElementById('proj-video-url').value = p.video_url;
+      videoPreview.innerHTML = `<video controls preload="metadata" style="width:100%;border-radius:8px;max-height:160px;background:#000"><source src="${esc(p.video_url)}"></video>`;
+      videoPreview.style.display = 'block';
+    }
+  } else if (videoItems.length) {
+    videoPreview.innerHTML = videoItems.map(m =>
+      `<video controls preload="metadata" style="width:100%;border-radius:8px;max-height:140px;background:#000;margin-bottom:0.5rem"><source src="${esc(m.url)}" type="${m.mime_type||'video/mp4'}"></video>`
+    ).join('');
     videoPreview.style.display = 'block';
   } else {
     videoPreview.style.display = 'none';
@@ -1079,7 +1112,14 @@ function resetProjectForm() {
   document.getElementById('video-upload-status').textContent = '';
   document.getElementById('project-form-title').textContent = 'Add New Project';
   document.getElementById('project-form-status').style.display = 'none';
+  collectedImageUrls = [];
+  collectedVideoUrls = [];
 }
+
+// ── COLLECTED MEDIA TRACKING ───────────────────────────────────
+// Stores all URLs uploaded during this form session
+let collectedImageUrls = []; // [{ url, key }]
+let collectedVideoUrls = []; // [{ url, key, mime }]
 
 async function saveProject() {
   const id = document.getElementById('edit-project-id').value;
@@ -1097,14 +1137,19 @@ async function saveProject() {
     category: document.getElementById('proj-category').value,
     description: document.getElementById('proj-description').value.trim(),
     image_url: document.getElementById('proj-image-url').value,
+    thumbnail_url: document.getElementById('proj-image-url').value,
     client_name: document.getElementById('proj-client').value.trim(),
     project_year: document.getElementById('proj-year').value.trim(),
     deliverables: document.getElementById('proj-deliverables').value.trim(),
     project_url: document.getElementById('proj-url').value.trim(),
-    // Direct R2 upload takes precedence; falls back to YouTube/Vimeo text field
     video_url: (document.getElementById('proj-video-url').value.trim()
               || document.getElementById('proj-video').value.trim()),
-    featured: document.getElementById('proj-featured').checked
+    featured: document.getElementById('proj-featured').checked,
+    // Full media collections uploaded this session
+    media_urls: [
+      ...collectedImageUrls.map(m => ({ url: m.url, key: m.key, media_type: 'image' })),
+      ...collectedVideoUrls.map(m => ({ url: m.url, key: m.key, media_type: 'video', mime_type: m.mime })),
+    ],
   };
 
   const btn = document.getElementById('save-project-btn');
@@ -1212,7 +1257,6 @@ async function uploadFilesSequentially(files, type) {
   const progressWrap = document.getElementById(isVideo ? 'video-upload-progress' : 'upload-progress');
   const progressBar  = document.getElementById(isVideo ? 'video-upload-bar' : 'upload-bar');
 
-  preview.innerHTML = '';
   preview.style.display = 'block';
   progressWrap.style.display = 'block';
 
@@ -1229,30 +1273,34 @@ async function uploadFilesSequentially(files, type) {
       progressBar.style.width = '100%';
       results.push({ url: data.url, key: data.key, file });
 
-      // Show thumbnail preview for each uploaded file
       if (isVideo) {
+        // Track in collected array
+        collectedVideoUrls.push({ url: data.url, key: data.key, mime: file.type });
+        // Last video URL populates hidden field (legacy fallback)
+        document.getElementById('proj-video-url').value = data.url;
         preview.innerHTML += `<div style="margin-bottom:0.5rem">
           <video controls preload="metadata" style="width:100%;border-radius:8px;max-height:160px;background:#000">
             <source src="${data.url}" type="${file.type}">
           </video>
           <p style="font-size:0.72rem;color:var(--text3);margin-top:0.25rem">✓ ${file.name}</p>
         </div>`;
-        // Last video URL goes into the hidden field
-        document.getElementById('proj-video-url').value = data.url;
       } else {
-        preview.innerHTML += `<img src="${data.url}" alt="${file.name}" style="width:80px;height:60px;object-fit:cover;border-radius:6px;margin:0 4px 4px 0;border:2px solid var(--border)">`;
-        // First image URL is the cover
-        if (i === 0) document.getElementById('proj-image-url').value = data.url;
+        // Track in collected array
+        collectedImageUrls.push({ url: data.url, key: data.key });
+        // First image URL populates hidden field (cover/legacy fallback)
+        if (!document.getElementById('proj-image-url').value) {
+          document.getElementById('proj-image-url').value = data.url;
+        }
+        preview.innerHTML += `<img src="${data.url}" alt="${file.name}" style="width:72px;height:54px;object-fit:cover;border-radius:6px;margin:0 4px 4px 0;border:1px solid var(--border)">`;
       }
 
-      // Short pause between uploads to avoid overwhelming the server
       if (i < files.length - 1) await new Promise(r => setTimeout(r, 300));
 
     } catch (err) {
       statusEl.style.color = '#f87171';
       statusEl.textContent = `Failed: ${file.name} — ${err.message}`;
       progressWrap.style.display = 'none';
-      return; // stop queue on error
+      return;
     }
   }
 

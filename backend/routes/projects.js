@@ -80,15 +80,18 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', requireAuth, async (req, res) => {
   const { title, category, description, image_url, video_url, project_url, featured,
-          client_name, project_year, deliverables, thumbnail_url } = req.body;
+          client_name, project_year, deliverables, thumbnail_url, media_urls } = req.body;
 
   if (!title) return res.status(400).json({ error: 'Title is required.' });
 
   const delivStr = Array.isArray(deliverables) ? deliverables.join(', ') : (deliverables || null);
   const cover    = thumbnail_url || image_url || null;
 
+  const client = await pool.connect();
   try {
-    const { rows } = await pool.query(
+    await client.query('BEGIN');
+
+    const { rows } = await client.query(
       `INSERT INTO projects
          (title, category, description, image_url, video_url, project_url, featured,
           client_name, project_year, deliverables, thumbnail_url)
@@ -98,22 +101,64 @@ router.post('/', requireAuth, async (req, res) => {
        project_url||null, featured??false, client_name||null, project_year||null,
        delivStr, cover]
     );
-    res.status(201).json({ ...rows[0], media: [] });
+
+    const projectId = rows[0].id;
+
+    // Save all media items to project_media table
+    const mediaItems = Array.isArray(media_urls) && media_urls.length ? media_urls : [];
+
+    // If no media_urls but legacy fields provided, build from them
+    if (!mediaItems.length) {
+      if (image_url) mediaItems.push({ url: image_url, media_type: 'image', is_thumbnail: true });
+      if (video_url) mediaItems.push({ url: video_url, media_type: 'video', mime_type: 'video/mp4' });
+    }
+
+    for (let i = 0; i < mediaItems.length; i++) {
+      const m = mediaItems[i];
+      const isThumb = i === 0 || !!m.is_thumbnail;
+      await client.query(
+        `INSERT INTO project_media (project_id, url, storage_key, media_type, mime_type, sort_order, is_thumbnail)
+         VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+        [projectId, m.url, m.key||m.storage_key||null,
+         m.media_type||'image', m.mime_type||null, i, isThumb && i === 0]
+      );
+    }
+
+    // Update media_count and thumbnail_url
+    if (mediaItems.length) {
+      await client.query(
+        `UPDATE projects SET
+           media_count   = $2,
+           thumbnail_url = COALESCE($3, thumbnail_url)
+         WHERE id = $1`,
+        [projectId, mediaItems.length, mediaItems.find(m => m.media_type === 'image')?.url || cover]
+      );
+    }
+
+    await client.query('COMMIT');
+    const [project] = await attachMedia([rows[0]]);
+    res.status(201).json(project);
   } catch (err) {
+    await client.query('ROLLBACK');
     console.error('[POST /projects]', err.message);
     res.status(500).json({ error: 'Failed to create project.' });
+  } finally {
+    client.release();
   }
 });
 
 router.put('/:id', requireAuth, async (req, res) => {
   const { title, category, description, image_url, video_url, project_url, featured,
-          client_name, project_year, deliverables, thumbnail_url } = req.body;
+          client_name, project_year, deliverables, thumbnail_url, media_urls } = req.body;
 
   const delivStr = deliverables === undefined ? undefined
     : Array.isArray(deliverables) ? deliverables.join(', ') : deliverables;
 
+  const client = await pool.connect();
   try {
-    const { rows } = await pool.query(
+    await client.query('BEGIN');
+
+    const { rows } = await client.query(
       `UPDATE projects SET
          title         = COALESCE($1,  title),
          category      = COALESCE($2,  category),
@@ -129,14 +174,60 @@ router.put('/:id', requireAuth, async (req, res) => {
        WHERE id = $12 RETURNING *`,
       [title||null, category||null, description||null, image_url||null, video_url||null,
        project_url||null, featured??null, client_name||null, project_year||null,
-       delivStr??null, thumbnail_url||null, req.params.id]
+       delivStr??null, thumbnail_url||image_url||null, req.params.id]
     );
-    if (!rows[0]) return res.status(404).json({ error: 'Project not found.' });
+    if (!rows[0]) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Project not found.' }); }
+
+    const projectId = rows[0].id;
+
+    // If media_urls provided, replace all project_media entries
+    if (Array.isArray(media_urls) && media_urls.length > 0) {
+      // Delete existing media then re-insert (preserves order from admin)
+      await client.query('DELETE FROM project_media WHERE project_id = $1', [projectId]);
+
+      for (let i = 0; i < media_urls.length; i++) {
+        const m = media_urls[i];
+        await client.query(
+          `INSERT INTO project_media (project_id, url, storage_key, media_type, mime_type, sort_order, is_thumbnail)
+           VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+          [projectId, m.url, m.key||m.storage_key||null,
+           m.media_type||'image', m.mime_type||null, i, i === 0 && m.media_type !== 'video']
+        );
+      }
+
+      // Update media_count and thumbnail
+      const firstImage = media_urls.find(m => m.media_type === 'image');
+      await client.query(
+        `UPDATE projects SET
+           media_count   = $2,
+           thumbnail_url = COALESCE($3, thumbnail_url)
+         WHERE id = $1`,
+        [projectId, media_urls.length, firstImage?.url || image_url || null]
+      );
+    } else if (image_url || video_url) {
+      // Legacy: ensure at least the single fields are in project_media
+      const existing = await client.query('SELECT id FROM project_media WHERE project_id = $1', [projectId]);
+      if (existing.rowCount === 0) {
+        if (image_url) await client.query(
+          `INSERT INTO project_media (project_id, url, media_type, sort_order, is_thumbnail) VALUES ($1,$2,'image',0,true)`,
+          [projectId, image_url]
+        );
+        if (video_url) await client.query(
+          `INSERT INTO project_media (project_id, url, media_type, sort_order, is_thumbnail) VALUES ($1,$2,'video',1,false)`,
+          [projectId, video_url]
+        );
+      }
+    }
+
+    await client.query('COMMIT');
     const [project] = await attachMedia([rows[0]]);
     res.json(project);
   } catch (err) {
+    await client.query('ROLLBACK');
     console.error('[PUT /projects/:id]', err.message);
     res.status(500).json({ error: 'Failed to update project.' });
+  } finally {
+    client.release();
   }
 });
 
