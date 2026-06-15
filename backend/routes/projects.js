@@ -12,13 +12,12 @@ async function ensureProjectColumns() {
     `ALTER TABLE projects ADD COLUMN IF NOT EXISTS deliverables  TEXT`,
     `ALTER TABLE projects ADD COLUMN IF NOT EXISTS thumbnail_url TEXT`,
     `ALTER TABLE projects ADD COLUMN IF NOT EXISTS media_count   INTEGER DEFAULT 0`,
-    // project_media: one row per image/video, linked to a project
     `CREATE TABLE IF NOT EXISTS project_media (
       id           SERIAL PRIMARY KEY,
       project_id   INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
       url          TEXT    NOT NULL,
       storage_key  TEXT,
-      media_type   VARCHAR(10) NOT NULL DEFAULT 'image',  -- 'image' | 'video'
+      media_type   VARCHAR(10) NOT NULL DEFAULT 'image',
       mime_type    VARCHAR(80),
       sort_order   INTEGER DEFAULT 0,
       is_thumbnail BOOLEAN DEFAULT FALSE,
@@ -35,7 +34,6 @@ async function ensureProjectColumns() {
 ensureProjectColumns();
 
 // ── Helpers ───────────────────────────────────────────────────
-// Attach media array to each project row
 async function attachMedia(projects) {
   if (!projects.length) return projects;
   const ids = projects.map(p => p.id);
@@ -55,10 +53,6 @@ async function attachMedia(projects) {
 
 // ── PUBLIC ROUTES ─────────────────────────────────────────────
 
-/**
- * GET /api/projects
- * Returns all projects with their media arrays, newest first.
- */
 router.get('/', async (req, res) => {
   try {
     const { rows } = await pool.query('SELECT * FROM projects ORDER BY created_at DESC');
@@ -70,10 +64,6 @@ router.get('/', async (req, res) => {
   }
 });
 
-/**
- * GET /api/projects/:id
- * Single project with full media array.
- */
 router.get('/:id', async (req, res) => {
   try {
     const { rows } = await pool.query('SELECT * FROM projects WHERE id = $1', [req.params.id]);
@@ -88,9 +78,6 @@ router.get('/:id', async (req, res) => {
 
 // ── ADMIN ROUTES ─────────────────────────────────────────────
 
-/**
- * POST /api/projects  [Auth required]
- */
 router.post('/', requireAuth, async (req, res) => {
   const { title, category, description, image_url, video_url, project_url, featured,
           client_name, project_year, deliverables, thumbnail_url } = req.body;
@@ -118,9 +105,6 @@ router.post('/', requireAuth, async (req, res) => {
   }
 });
 
-/**
- * PUT /api/projects/:id  [Auth required]
- */
 router.put('/:id', requireAuth, async (req, res) => {
   const { title, category, description, image_url, video_url, project_url, featured,
           client_name, project_year, deliverables, thumbnail_url } = req.body;
@@ -156,10 +140,6 @@ router.put('/:id', requireAuth, async (req, res) => {
   }
 });
 
-/**
- * DELETE /api/projects/:id  [Auth required]
- * Cascades to project_media via FK.
- */
 router.delete('/:id', requireAuth, async (req, res) => {
   try {
     const { rowCount } = await pool.query('DELETE FROM projects WHERE id = $1', [req.params.id]);
@@ -173,10 +153,6 @@ router.delete('/:id', requireAuth, async (req, res) => {
 
 // ── MEDIA SUB-ROUTES ─────────────────────────────────────────
 
-/**
- * GET /api/projects/:id/media
- * Returns all media for a project.
- */
 router.get('/:id/media', async (req, res) => {
   try {
     const { rows } = await pool.query(
@@ -190,10 +166,6 @@ router.get('/:id/media', async (req, res) => {
   }
 });
 
-/**
- * POST /api/projects/:id/media  [Auth required]
- * Body: { url, storage_key, media_type, mime_type, sort_order, is_thumbnail }
- */
 router.post('/:id/media', requireAuth, async (req, res) => {
   const { url, storage_key, media_type, mime_type, sort_order, is_thumbnail } = req.body;
   if (!url) return res.status(400).json({ error: 'url is required.' });
@@ -201,7 +173,6 @@ router.post('/:id/media', requireAuth, async (req, res) => {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    // If setting as thumbnail, clear existing thumbnail flag
     if (is_thumbnail) {
       await client.query(
         'UPDATE project_media SET is_thumbnail = FALSE WHERE project_id = $1',
@@ -216,7 +187,6 @@ router.post('/:id/media', requireAuth, async (req, res) => {
        media_type||'image', mime_type||null,
        sort_order||0, !!is_thumbnail]
     );
-    // Update project thumbnail_url and media_count
     await client.query(
       `UPDATE projects SET
          media_count   = (SELECT COUNT(*) FROM project_media WHERE project_id = $1),
@@ -239,10 +209,6 @@ router.post('/:id/media', requireAuth, async (req, res) => {
   }
 });
 
-/**
- * PATCH /api/projects/:id/media/:mediaId  [Auth required]
- * Update sort_order or is_thumbnail.
- */
 router.patch('/:id/media/:mediaId', requireAuth, async (req, res) => {
   const { sort_order, is_thumbnail } = req.body;
   const client = await pool.connect();
@@ -262,7 +228,6 @@ router.patch('/:id/media/:mediaId', requireAuth, async (req, res) => {
       [sort_order??null, is_thumbnail??null, req.params.mediaId, req.params.id]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Media not found.' });
-    // Refresh thumbnail_url on project
     await client.query(
       `UPDATE projects SET
          thumbnail_url = COALESCE(
@@ -284,9 +249,6 @@ router.patch('/:id/media/:mediaId', requireAuth, async (req, res) => {
   }
 });
 
-/**
- * DELETE /api/projects/:id/media/:mediaId  [Auth required]
- */
 router.delete('/:id/media/:mediaId', requireAuth, async (req, res) => {
   try {
     const { rowCount } = await pool.query(
@@ -294,7 +256,6 @@ router.delete('/:id/media/:mediaId', requireAuth, async (req, res) => {
       [req.params.mediaId, req.params.id]
     );
     if (rowCount === 0) return res.status(404).json({ error: 'Media not found.' });
-    // Refresh count + thumbnail
     await pool.query(
       `UPDATE projects SET
          media_count   = (SELECT COUNT(*) FROM project_media WHERE project_id = $1),
@@ -312,10 +273,6 @@ router.delete('/:id/media/:mediaId', requireAuth, async (req, res) => {
   }
 });
 
-/**
- * PUT /api/projects/:id/media/reorder  [Auth required]
- * Body: { order: [{ id, sort_order }, ...] }
- */
 router.put('/:id/media/reorder', requireAuth, async (req, res) => {
   const { order } = req.body;
   if (!Array.isArray(order)) return res.status(400).json({ error: 'order array required.' });
@@ -336,177 +293,6 @@ router.put('/:id/media/reorder', requireAuth, async (req, res) => {
     res.status(500).json({ error: 'Failed to reorder media.' });
   } finally {
     client.release();
-  }
-});
-
-module.exports = router;
-
-
-/**
- * Ensure the projects table has the columns the admin form sends.
- * These columns may be absent if the table was created before these fields
- * were added to the form.  ALTER TABLE … ADD COLUMN IF NOT EXISTS is
- * idempotent, so running this on every boot is safe.
- */
-async function ensureProjectColumns() {
-  const migrations = [
-    `ALTER TABLE projects ADD COLUMN IF NOT EXISTS client_name   VARCHAR(255)`,
-    `ALTER TABLE projects ADD COLUMN IF NOT EXISTS project_year  VARCHAR(10)`,
-    `ALTER TABLE projects ADD COLUMN IF NOT EXISTS deliverables  TEXT`,
-  ];
-  for (const sql of migrations) {
-    await pool.query(sql).catch(err =>
-      console.error('[projects] column migration error:', err.message)
-    );
-  }
-}
-ensureProjectColumns();
-
-/**
- * GET /api/projects
- * Public — returns all projects ordered newest first.
- * Frontend expects an array; falls back to static data if empty/error.
- */
-router.get('/', async (req, res) => {
-  try {
-    const { rows } = await pool.query(
-      'SELECT * FROM projects ORDER BY created_at DESC'
-    );
-    res.json(rows);
-  } catch (err) {
-    console.error('[GET /projects]', err.message);
-    res.status(500).json({ error: 'Failed to load projects.' });
-  }
-});
-
-/**
- * GET /api/projects/:id
- * Public — single project by id.
- */
-router.get('/:id', async (req, res) => {
-  try {
-    const { rows } = await pool.query(
-      'SELECT * FROM projects WHERE id = $1',
-      [req.params.id]
-    );
-    if (!rows[0]) return res.status(404).json({ error: 'Project not found.' });
-    res.json(rows[0]);
-  } catch (err) {
-    console.error('[GET /projects/:id]', err.message);
-    res.status(500).json({ error: 'Server error.' });
-  }
-});
-
-/**
- * POST /api/projects   [Auth required]
- * Body: { title, category, description, image_url, video_url, project_url, featured }
- */
-router.post('/', requireAuth, async (req, res) => {
-  const { title, category, description, image_url, video_url, project_url, featured,
-          client_name, project_year, deliverables } = req.body;
-
-  if (!title) {
-    return res.status(400).json({ error: 'Title is required.' });
-  }
-
-  // Normalise deliverables: accept array or comma-separated string, store as text
-  const delivStr = Array.isArray(deliverables)
-    ? deliverables.join(', ')
-    : (deliverables || null);
-
-  try {
-    const { rows } = await pool.query(
-      `INSERT INTO projects
-         (title, category, description, image_url, video_url, project_url, featured,
-          client_name, project_year, deliverables)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
-       RETURNING *`,
-      [
-        title,
-        category   || null,
-        description || null,
-        image_url  || null,
-        video_url  || null,
-        project_url || null,
-        featured   ?? false,
-        client_name || null,
-        project_year || null,
-        delivStr,
-      ]
-    );
-    res.status(201).json(rows[0]);
-  } catch (err) {
-    console.error('[POST /projects]', err.message);
-    res.status(500).json({ error: 'Failed to create project.' });
-  }
-});
-
-/**
- * PUT /api/projects/:id   [Auth required]
- * Body: any subset of project fields
- */
-router.put('/:id', requireAuth, async (req, res) => {
-  const { title, category, description, image_url, video_url, project_url, featured,
-          client_name, project_year, deliverables } = req.body;
-
-  // Normalise deliverables: accept array or comma-separated string
-  const delivStr = deliverables === undefined
-    ? undefined
-    : Array.isArray(deliverables)
-      ? deliverables.join(', ')
-      : deliverables;
-
-  try {
-    const { rows } = await pool.query(
-      `UPDATE projects
-       SET title        = COALESCE($1,  title),
-           category     = COALESCE($2,  category),
-           description  = COALESCE($3,  description),
-           image_url    = COALESCE($4,  image_url),
-           video_url    = COALESCE($5,  video_url),
-           project_url  = COALESCE($6,  project_url),
-           featured     = COALESCE($7,  featured),
-           client_name  = COALESCE($8,  client_name),
-           project_year = COALESCE($9,  project_year),
-           deliverables = COALESCE($10, deliverables)
-       WHERE id = $11
-       RETURNING *`,
-      [
-        title       || null,
-        category    || null,
-        description || null,
-        image_url   || null,
-        video_url   || null,
-        project_url || null,
-        featured    ?? null,
-        client_name || null,
-        project_year || null,
-        delivStr    ?? null,
-        req.params.id,
-      ]
-    );
-    if (!rows[0]) return res.status(404).json({ error: 'Project not found.' });
-    res.json(rows[0]);
-  } catch (err) {
-    console.error('[PUT /projects/:id]', err.message);
-    res.status(500).json({ error: 'Failed to update project.' });
-  }
-});
-
-/**
- * DELETE /api/projects/:id   [Auth required]
- */
-router.delete('/:id', requireAuth, async (req, res) => {
-  try {
-    const { rowCount } = await pool.query(
-      'DELETE FROM projects WHERE id = $1',
-      [req.params.id]
-    );
-    if (rowCount === 0) return res.status(404).json({ error: 'Project not found.' });
-    res.json({ success: true, id: req.params.id });
-  } catch (err) {
-    console.error('[DELETE /projects/:id]', err.message);
-    res.status(500).json({ error: 'Failed to delete project.' });
   }
 });
 
