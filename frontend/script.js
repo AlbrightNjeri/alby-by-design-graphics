@@ -62,16 +62,9 @@ async function loadProjects() {
             title: p.title,
             category: p.category || '',
             tag: ({
-              branding: 'Brand Identity',
-              logos: 'Logo Design',
-              social: 'Social Media',
-              posters: 'Poster Design',
-              flyers: 'Flyer Design',
-              marketing: 'Marketing Materials',
-              motion: 'Motion Graphics',
-              video: 'Video Production',
-              ui: 'UI Design',
-              web: 'Web Design',
+              branding: 'Brand Identity', logos: 'Logo Design', social: 'Social Media',
+              posters: 'Poster Design', flyers: 'Flyer Design', marketing: 'Marketing Materials',
+              motion: 'Motion Graphics', video: 'Video Production', ui: 'UI Design', web: 'Web Design',
             })[p.category] || (p.category ? p.category.charAt(0).toUpperCase() + p.category.slice(1).replace(/-/g, ' ') : 'Design'),
             emoji: '✦', bg: 'ph-1',
             img: thumbnail, thumbnail,
@@ -208,17 +201,17 @@ function renderPortfolio(filter='all', query='') {
 function renderFeaturedWork() {
   const grid = document.getElementById('work-grid');
   if (!grid) return;
+  // Clear any existing card timers
+  cardTimers.forEach(t => clearInterval(t));
   const featured = portfolioProjects.filter(p => p.featured);
   const rest = portfolioProjects.filter(p => !p.featured);
   const display = [...featured, ...rest].slice(0, 6);
   if (!display.length) { grid.innerHTML = '<p style="color:var(--text3);padding:2rem 0">No projects yet.</p>'; return; }
   const delayClass = i => i===1||i===3?' reveal-delay-1':i===2||i===4?' reveal-delay-2':'';
   grid.innerHTML = display.map((p, i) => {
-    const imgHtml = p.img
-      ? `<img src="${p.img}" alt="${p.title} – ${p.tag} project by Alby by Design Graphics" loading="lazy" class="work-card-img" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" width="800" height="600">`
-      : `<div class="work-card-placeholder ${p.bg}" aria-hidden="true" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:3rem">${p.emoji}</div>`;
-    return `<div class="work-card${i===0?' featured':''}${delayClass(i)} reveal" data-project="${p.id}" tabindex="0" role="button" aria-label="View ${p.title} project">
-      ${imgHtml}<div class="work-card-border" aria-hidden="true"></div>
+    const slides = buildCardSlides(p);
+    return `<div class="work-card${i===0?' featured':''}${delayClass(i)} reveal" data-project="${p.id}" tabindex="0" role="button" aria-label="View ${p.title} project" style="position:relative;overflow:hidden">
+      ${slides}<div class="work-card-border" aria-hidden="true"></div>
       <div class="work-card-overlay" style="opacity:1"><div class="work-card-tag">${p.tag}</div><div class="work-card-title">${p.title}</div></div>
     </div>`;
   }).join('');
@@ -226,6 +219,12 @@ function renderFeaturedWork() {
     const id = card.getAttribute('data-project');
     card.addEventListener('click', () => openModal(id, 0));
     card.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' ') { e.preventDefault(); openModal(id, 0); } });
+    // Start Netflix cycling for cards with multiple media
+    const p = projectData[id];
+    if (p) {
+      const mediaList = p.media && p.media.length ? p.media : (p.img ? [{ url: p.img, media_type: 'image' }] : []);
+      startCardCycle(card, mediaList);
+    }
   });
 }
 
@@ -428,7 +427,6 @@ function animateRing() { rx+=(mx-rx)*0.12; ry+=(my-ry)*0.12; ring.style.left=rx+
 animateRing();
 function attachCursorListeners() {
   document.querySelectorAll('a,button,.work-card,.portfolio-item,.service-card,.skill-tag').forEach(el => {
-    // Avoid double-attaching by using a dataset flag
     if (el.dataset.cursorBound) return;
     el.dataset.cursorBound = '1';
     el.addEventListener('mouseenter', () => document.body.classList.add('cursor-hover'));
@@ -444,8 +442,8 @@ window.addEventListener('load', async () => {
     document.getElementById('page-loader').classList.add('hidden');
     renderFeaturedWork();
     renderPortfolio();
-    observeReveals(); // called AFTER renders so all .reveal elements exist
-    attachCursorListeners(); // re-attach cursor to dynamically added cards
+    observeReveals();
+    attachCursorListeners();
   }, 1300);
 });
 

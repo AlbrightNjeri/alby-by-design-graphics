@@ -298,6 +298,23 @@ tr:hover td{background:rgba(255,255,255,0.02)}
 /* ── DIVIDER ── */
 .divider{height:1px;background:var(--border);margin:2rem 0}
 
+/* ── MEDIA GRID ── */
+.media-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:0.65rem;margin-top:0.75rem}
+.media-thumb{position:relative;aspect-ratio:4/3;border-radius:8px;overflow:hidden;border:2px solid var(--border);cursor:grab;background:var(--surface2);transition:border-color 0.2s,transform 0.15s}
+.media-thumb:hover{border-color:var(--border-gold)}
+.media-thumb.is-thumb{border-color:var(--gold)!important}
+.media-thumb.dragging{opacity:0.35;cursor:grabbing;transform:scale(0.96)}
+.media-thumb.drag-over{border-color:var(--gold);border-style:dashed}
+.media-thumb img,.media-thumb video{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
+.media-thumb-actions{position:absolute;inset:0;background:rgba(0,0,0,0.6);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.3rem;opacity:0;transition:opacity 0.2s}
+.media-thumb:hover .media-thumb-actions{opacity:1}
+.media-thumb-badge{position:absolute;top:4px;left:4px;background:var(--gold);color:#0A0A0A;font-size:0.58rem;font-weight:700;padding:0.1rem 0.35rem;border-radius:4px;letter-spacing:0.02em}
+.media-thumb-type{position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.75);color:#fff;font-size:0.58rem;padding:0.1rem 0.3rem;border-radius:4px}
+.media-btn{font-size:0.68rem;padding:0.2rem 0.45rem;border-radius:5px;border:none;cursor:pointer;font-weight:600;line-height:1.4}
+.media-btn-del{background:rgba(224,83,83,0.92);color:#fff}
+.media-btn-thumb{background:rgba(224,165,59,0.92);color:#0A0A0A}
+.drag-handle{position:absolute;bottom:3px;right:4px;color:rgba(255,255,255,0.5);font-size:0.85rem;line-height:1;user-select:none}
+
 /* ── RESPONSIVE ADMIN ── */
 @media(max-width:768px){
   /* Sidebar becomes a top bar */
@@ -474,7 +491,7 @@ tr:hover td{background:rgba(255,255,255,0.02)}
         <div class="section-header">
           <h3 id="project-form-title">Add New Project</h3>
         </div>
-        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.75rem;max-width:640px">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.75rem;max-width:720px">
           <input type="hidden" id="edit-project-id">
           <div class="form-row">
             <div class="form-group">
@@ -500,38 +517,47 @@ tr:hover td{background:rgba(255,255,255,0.02)}
             <label>Description</label>
             <textarea id="proj-description" placeholder="Describe the project, challenge, and outcome..."></textarea>
           </div>
+
+          <!-- MEDIA MANAGEMENT PANEL -->
           <div class="form-group">
-            <label>Project Images</label>
-            <div class="upload-zone" id="upload-zone">
+            <label style="display:flex;align-items:center;justify-content:space-between">
+              <span>Media Gallery <span id="media-count-label" style="color:var(--text3);font-size:0.75rem;text-transform:none;font-weight:400;margin-left:0.4rem"></span></span>
+              <span style="font-size:0.72rem;color:var(--text3);text-transform:none;font-weight:400">Drag to reorder · ★ = cover thumbnail</span>
+            </label>
+            <!-- Existing media drag-drop grid -->
+            <div class="media-grid" id="media-grid"></div>
+
+            <!-- Upload images -->
+            <div class="upload-zone" id="upload-zone" style="margin-top:0.75rem">
               <input type="file" id="image-file" accept="image/jpeg,image/png,image/webp,image/gif" multiple onchange="handleFileSelect(this)">
-              <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-              <p><strong>Click to upload</strong> or drag and drop</p>
-              <p style="font-size:0.75rem;margin-top:0.25rem">JPG, PNG, WEBP, GIF — select multiple files at once</p>
+              <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <p><strong>Add Images</strong> — click or drag &amp; drop</p>
+              <p style="font-size:0.72rem;margin-top:0.2rem">JPG, PNG, WEBP, GIF · multiple OK</p>
             </div>
-            <div class="upload-progress" id="upload-progress"><div class="upload-progress-bar" id="upload-bar"></div></div>
-            <div class="upload-preview" id="upload-preview" style="display:none"></div>
-            <input type="hidden" id="proj-image-url">
-            <div id="upload-status" style="font-size:0.8rem;margin-top:0.5rem;color:var(--text3)"></div>
-          </div>
-          <div class="form-group">
-            <label>Project Video <span style="color:var(--text3);font-size:0.75rem;text-transform:none;font-weight:400">(upload MP4/WEBM directly OR paste a YouTube/Vimeo link below)</span></label>
-            <div class="upload-zone" id="video-upload-zone" style="border-color:rgba(224,165,59,0.2)">
+            <div class="upload-progress" id="upload-progress" style="display:none"><div class="upload-progress-bar" id="upload-bar"></div></div>
+            <div id="upload-status" style="font-size:0.8rem;margin-top:0.4rem;color:var(--text3)"></div>
+
+            <!-- Upload videos -->
+            <div class="upload-zone" id="video-upload-zone" style="margin-top:0.65rem;border-color:rgba(224,165,59,0.25)">
               <input type="file" id="video-file" accept="video/mp4,video/webm,video/quicktime,video/x-msvideo" multiple onchange="handleVideoFileSelect(this)">
-              <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
-              <p><strong>Click to upload video</strong> or drag and drop</p>
-              <p style="font-size:0.75rem;margin-top:0.25rem">MP4, WEBM, MOV — select multiple files at once</p>
+              <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+              <p><strong>Add Videos</strong> — click or drag &amp; drop</p>
+              <p style="font-size:0.72rem;margin-top:0.2rem">MP4, WEBM, MOV · multiple OK</p>
             </div>
             <div class="upload-progress" id="video-upload-progress" style="display:none"><div class="upload-progress-bar" id="video-upload-bar"></div></div>
-            <div class="upload-preview" id="video-upload-preview" style="display:none"></div>
-            <div id="video-upload-status" style="font-size:0.8rem;margin-top:0.5rem;color:var(--text3)"></div>
-            <div style="margin-top:0.75rem;display:flex;align-items:center;gap:0.75rem">
+            <div id="video-upload-status" style="font-size:0.8rem;margin-top:0.4rem;color:var(--text3)"></div>
+
+            <!-- Embed link -->
+            <div style="margin-top:0.65rem;display:flex;align-items:center;gap:0.65rem">
               <div style="flex:1;height:1px;background:var(--border)"></div>
-              <span style="font-size:0.75rem;color:var(--text3)">or paste a link</span>
+              <span style="font-size:0.72rem;color:var(--text3)">or embed a link</span>
               <div style="flex:1;height:1px;background:var(--border)"></div>
             </div>
-            <input type="url" id="proj-video" placeholder="https://youtube.com/... or https://vimeo.com/..." style="margin-top:0.75rem;width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:0.75rem 1rem;color:var(--text);font-size:0.9rem;outline:none;transition:border-color var(--transition)" onfocus="this.style.borderColor='var(--border-gold)'" onblur="this.style.borderColor='var(--border)'">
+            <input type="url" id="proj-video" placeholder="https://youtube.com/... or https://vimeo.com/..." style="margin-top:0.65rem;width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:0.75rem 1rem;color:var(--text);font-size:0.875rem;outline:none;transition:border-color var(--transition)" onfocus="this.style.borderColor='var(--border-gold)'" onblur="this.style.borderColor='var(--border)'">
+            <input type="hidden" id="proj-image-url">
             <input type="hidden" id="proj-video-url">
           </div>
+
           <div class="form-row">
             <div class="form-group">
               <label>Client / Brand Name</label>
@@ -558,7 +584,7 @@ tr:hover td{background:rgba(255,255,255,0.02)}
           </div>
           <div style="display:flex;gap:0.75rem;margin-top:0.5rem">
             <button class="btn-primary" id="save-project-btn" onclick="saveProject()">Save Project</button>
-            <button class="btn-secondary" onclick="resetProjectForm()">Clear</button>
+            <button class="btn-secondary" onclick="resetProjectForm()">Clear Form</button>
           </div>
           <div id="project-form-status" style="margin-top:1rem;font-size:0.85rem;display:none"></div>
         </div>
@@ -938,6 +964,11 @@ function showPage(name, navEl) {
   if (name === 'logo') loadLogo();
   if (name === 'testimonials') loadTestimonials();
   if (name === 'services') loadServicesAdmin();
+  // FIX 3&4: Reset form when navigating to Add Project from the sidebar nav
+  // (not when editProject() calls showPage — that sets edit-project-id first)
+  if (name === 'add-project' && !document.getElementById('edit-project-id').value) {
+    resetProjectForm();
+  }
 }
 
 // ── DASHBOARD ─────────────────────────────────────────────────
@@ -999,10 +1030,15 @@ function renderProjects(projects) {
     grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg><p>No projects yet. Add your first one!</p></div>`;
     return;
   }
-  grid.innerHTML = projects.map(p => `
+  grid.innerHTML = projects.map(p => {
+    // FIX 2: thumbnail_url preferred (small cover image); lazy-load for performance
+    const cover = p.thumbnail_url || p.image_url || (Array.isArray(p.media) && p.media.find(m => m.is_thumbnail)?.url) || (Array.isArray(p.media) && p.media[0]?.url) || '';
+    const mediaCount = p.media_count || (Array.isArray(p.media) ? p.media.length : 0);
+    return `
     <div class="project-card">
-      <div class="project-card-img">
-        ${p.image_url ? `<img src="${esc(p.image_url)}" alt="${esc(p.title)}" loading="lazy">` : '<span>No image</span>'}
+      <div class="project-card-img" style="position:relative">
+        ${cover ? `<img src="${esc(cover)}" alt="${esc(p.title)}" loading="lazy" style="width:100%;height:100%;object-fit:cover">` : '<span style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text3)">No image</span>'}
+        ${mediaCount > 1 ? `<span style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.7);color:#fff;font-size:0.65rem;padding:0.15rem 0.4rem;border-radius:4px">📷 ${mediaCount}</span>` : ''}
       </div>
       <div class="project-card-body">
         <div class="project-card-tag">${esc(p.category || 'Design')}${p.featured ? '<span class="badge-featured">Featured</span>' : ''}</div>
@@ -1014,16 +1050,84 @@ function renderProjects(projects) {
           <button class="btn-danger" onclick="confirmDelete(${p.id})">Delete</button>
         </div>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
+}
+
+// ── MEDIA STATE (per-project, fully isolated) ─────────────────
+// Each item: { url, key, media_type:'image'|'video', mime:'video/mp4'|null, is_thumbnail:bool, sort_order:number, id:number|null }
+let mediaItems = [];
+let thumbnailIndex = 0;
+
+function mediaCountLabel() {
+  const imgs = mediaItems.filter(m => m.media_type !== 'video').length;
+  const vids = mediaItems.filter(m => m.media_type === 'video').length;
+  const parts = [];
+  if (imgs) parts.push(`${imgs} image${imgs !== 1 ? 's' : ''}`);
+  if (vids) parts.push(`${vids} video${vids !== 1 ? 's' : ''}`);
+  return parts.length ? `(${parts.join(', ')})` : '';
+}
+
+function renderMediaGrid() {
+  const grid = document.getElementById('media-grid');
+  const label = document.getElementById('media-count-label');
+  if (label) label.textContent = mediaCountLabel();
+  if (!grid) return;
+  if (mediaItems.length === 0) { grid.innerHTML = ''; return; }
+
+  grid.innerHTML = mediaItems.map((m, i) => {
+    const isThumb = i === thumbnailIndex && m.media_type !== 'video';
+    const typeLabel = m.media_type === 'video' ? 'VIDEO' : 'IMG';
+    const previewEl = m.media_type === 'video'
+      ? `<video src="${esc(m.url)}" preload="none" style="width:100%;height:100%;object-fit:cover"></video>`
+      : `<img src="${esc(m.url)}" alt="" loading="lazy">`;
+    return `<div class="media-thumb${isThumb ? ' is-thumb' : ''}" draggable="true"
+        data-idx="${i}"
+        ondragstart="mediaDragStart(event,${i})"
+        ondragover="mediaDragOver(event,${i})"
+        ondrop="mediaDrop(event,${i})"
+        ondragend="mediaDragEnd(event)">
+      ${previewEl}
+      ${isThumb ? '<div class="media-thumb-badge">★ Cover</div>' : ''}
+      <div class="media-thumb-type">${typeLabel}</div>
+      <div class="media-thumb-actions">
+        <button class="media-btn media-btn-del" onclick="removeMediaItem(${i})">✕ Remove</button>
+        ${m.media_type !== 'video' && !isThumb ? `<button class="media-btn media-btn-thumb" onclick="setThumbnail(${i})">★ Set Cover</button>` : ''}
+      </div>
+      <div class="drag-handle">⠿</div>
+    </div>`;
+  }).join('');
+}
+
+// Drag-and-drop reordering
+let dragSrcIdx = null;
+function mediaDragStart(e, i) { dragSrcIdx = i; e.currentTarget.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; }
+function mediaDragOver(e, i)  { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; document.querySelectorAll('.media-thumb').forEach(el => el.classList.remove('drag-over')); if (i !== dragSrcIdx) e.currentTarget.classList.add('drag-over'); }
+function mediaDrop(e, i)      { e.preventDefault(); if (dragSrcIdx === null || dragSrcIdx === i) return; const moved = mediaItems.splice(dragSrcIdx, 1)[0]; mediaItems.splice(i, 0, moved); if (thumbnailIndex === dragSrcIdx) thumbnailIndex = i; else if (dragSrcIdx < thumbnailIndex && i >= thumbnailIndex) thumbnailIndex--; else if (dragSrcIdx > thumbnailIndex && i <= thumbnailIndex) thumbnailIndex++; mediaItems.forEach((m, idx) => { m.sort_order = idx; }); renderMediaGrid(); }
+function mediaDragEnd(e)      { dragSrcIdx = null; document.querySelectorAll('.media-thumb').forEach(el => el.classList.remove('dragging','drag-over')); }
+
+function removeMediaItem(i) {
+  mediaItems.splice(i, 1);
+  if (thumbnailIndex >= mediaItems.length) thumbnailIndex = Math.max(0, mediaItems.length - 1);
+  // Recalc first non-video as thumbnail
+  const firstImg = mediaItems.findIndex(m => m.media_type !== 'video');
+  if (firstImg !== -1 && mediaItems[thumbnailIndex]?.media_type === 'video') thumbnailIndex = firstImg;
+  mediaItems.forEach((m, idx) => { m.sort_order = idx; });
+  renderMediaGrid();
+}
+
+function setThumbnail(i) {
+  thumbnailIndex = i;
+  renderMediaGrid();
 }
 
 function editProject(id) {
   const p = allProjects.find(x => x.id === id);
   if (!p) return;
 
-  // Reset collected media then seed from existing project data
-  collectedImageUrls = [];
-  collectedVideoUrls = [];
+  // ── FIX 4: Fully isolate state per project — clear before seeding ──
+  mediaItems = [];
+  thumbnailIndex = 0;
 
   document.getElementById('edit-project-id').value = p.id;
   document.getElementById('proj-title').value = p.title || '';
@@ -1034,64 +1138,44 @@ function editProject(id) {
   document.getElementById('proj-year').value = p.project_year || '';
   document.getElementById('proj-deliverables').value = Array.isArray(p.deliverables) ? p.deliverables.join(', ') : (p.deliverables || '');
   document.getElementById('proj-url').value = p.project_url || '';
+  document.getElementById('proj-video').value = '';
+  document.getElementById('proj-video-url').value = '';
   document.getElementById('proj-featured').checked = !!p.featured;
   document.getElementById('project-form-title').textContent = 'Edit Project';
 
-  // Seed collected arrays from existing project_media (returned by API)
+  // Seed mediaItems from API media array (project-specific)
   const existingMedia = Array.isArray(p.media) ? p.media : [];
-  existingMedia.forEach(m => {
-    if (m.media_type === 'video') {
-      collectedVideoUrls.push({ url: m.url, key: m.storage_key || null, mime: m.mime_type || 'video/mp4' });
-    } else {
-      collectedImageUrls.push({ url: m.url, key: m.storage_key || null });
-    }
+  const sorted = [...existingMedia].sort((a, b) => (a.sort_order ?? a.id) - (b.sort_order ?? b.id));
+
+  sorted.forEach((m, idx) => {
+    mediaItems.push({
+      url: m.url, key: m.storage_key || null,
+      media_type: m.media_type || 'image',
+      mime: m.mime_type || (m.media_type === 'video' ? 'video/mp4' : null),
+      is_thumbnail: !!m.is_thumbnail, sort_order: idx, id: m.id || null
+    });
+    if (m.is_thumbnail && m.media_type !== 'video') thumbnailIndex = idx;
   });
 
-  // Also seed from legacy fields if no media array
+  // Legacy fallback: no media array but image_url / video_url fields exist
   if (!existingMedia.length) {
-    if (p.image_url) collectedImageUrls.push({ url: p.image_url, key: null });
-    if (p.video_url) collectedVideoUrls.push({ url: p.video_url, key: null, mime: 'video/mp4' });
-  }
-
-  // Image preview — show all existing images as thumbnails
-  const imagePreview = document.getElementById('upload-preview');
-  const imageUrls = existingMedia.filter(m => m.media_type !== 'video').map(m => m.url);
-  if (!imageUrls.length && p.image_url) imageUrls.push(p.image_url);
-  if (imageUrls.length) {
-    imagePreview.innerHTML = imageUrls.map(url =>
-      `<img src="${esc(url)}" alt="preview" style="width:72px;height:54px;object-fit:cover;border-radius:6px;margin:0 4px 4px 0;border:1px solid var(--border)">`
-    ).join('');
-    imagePreview.style.display = 'block';
-  }
-
-  // Video preview — show all existing videos
-  const videoPreview = document.getElementById('video-upload-preview');
-  const videoItems = existingMedia.filter(m => m.media_type === 'video');
-  if (!videoItems.length && p.video_url) {
-    const isEmbed = p.video_url.includes('youtube') || p.video_url.includes('vimeo') || p.video_url.includes('youtu.be');
-    if (isEmbed) {
-      document.getElementById('proj-video').value = p.video_url;
-      videoPreview.innerHTML = `<p style="font-size:0.8rem;color:var(--gold);margin-top:0.4rem">🔗 ${esc(p.video_url)}</p>`;
-      videoPreview.style.display = 'block';
-    } else {
-      document.getElementById('proj-video-url').value = p.video_url;
-      videoPreview.innerHTML = `<video controls preload="metadata" style="width:100%;border-radius:8px;max-height:160px;background:#000"><source src="${esc(p.video_url)}"></video>`;
-      videoPreview.style.display = 'block';
+    if (p.image_url) mediaItems.push({ url: p.image_url, key: null, media_type: 'image', mime: null, is_thumbnail: true, sort_order: 0, id: null });
+    if (p.video_url) {
+      const isEmbed = /youtube|vimeo|youtu\.be/.test(p.video_url);
+      if (isEmbed) document.getElementById('proj-video').value = p.video_url;
+      else mediaItems.push({ url: p.video_url, key: null, media_type: 'video', mime: 'video/mp4', is_thumbnail: false, sort_order: mediaItems.length, id: null });
     }
-  } else if (videoItems.length) {
-    videoPreview.innerHTML = videoItems.map(m =>
-      `<video controls preload="metadata" style="width:100%;border-radius:8px;max-height:140px;background:#000;margin-bottom:0.5rem"><source src="${esc(m.url)}" type="${m.mime_type||'video/mp4'}"></video>`
-    ).join('');
-    videoPreview.style.display = 'block';
-  } else {
-    videoPreview.style.display = 'none';
-    videoPreview.innerHTML = '';
   }
 
+  renderMediaGrid();
   showPage('add-project', document.querySelectorAll('.nav-item')[2]);
 }
 
 function resetProjectForm() {
+  // ── FIX 3: Completely purge all state for a fresh session ──
+  mediaItems = [];
+  thumbnailIndex = 0;
+
   document.getElementById('edit-project-id').value = '';
   document.getElementById('proj-title').value = '';
   document.getElementById('proj-category').value = '';
@@ -1104,22 +1188,18 @@ function resetProjectForm() {
   document.getElementById('proj-video').value = '';
   document.getElementById('proj-video-url').value = '';
   document.getElementById('proj-featured').checked = false;
-  document.getElementById('upload-preview').style.display = 'none';
-  document.getElementById('upload-preview').innerHTML = '';
   document.getElementById('upload-status').textContent = '';
-  document.getElementById('video-upload-preview').style.display = 'none';
-  document.getElementById('video-upload-preview').innerHTML = '';
   document.getElementById('video-upload-status').textContent = '';
+  document.getElementById('upload-progress').style.display = 'none';
+  document.getElementById('video-upload-progress').style.display = 'none';
+  document.getElementById('upload-bar').style.width = '0';
+  document.getElementById('video-upload-bar').style.width = '0';
   document.getElementById('project-form-title').textContent = 'Add New Project';
   document.getElementById('project-form-status').style.display = 'none';
-  collectedImageUrls = [];
-  collectedVideoUrls = [];
+  const lbl = document.getElementById('media-count-label');
+  if (lbl) lbl.textContent = '';
+  renderMediaGrid();
 }
-
-// ── COLLECTED MEDIA TRACKING ───────────────────────────────────
-// Stores all URLs uploaded during this form session
-let collectedImageUrls = []; // [{ url, key }]
-let collectedVideoUrls = []; // [{ url, key, mime }]
 
 async function saveProject() {
   const id = document.getElementById('edit-project-id').value;
@@ -1132,29 +1212,42 @@ async function saveProject() {
     return;
   }
 
+  // Determine cover image from thumbnailIndex
+  const thumbItem = mediaItems.find((m, i) => i === thumbnailIndex && m.media_type !== 'video')
+    || mediaItems.find(m => m.media_type !== 'video');
+  const coverUrl = thumbItem?.url || document.getElementById('proj-image-url').value || '';
+
+  const embedLink = document.getElementById('proj-video').value.trim();
+  const directVideoUrl = document.getElementById('proj-video-url').value.trim();
+
   const body = {
     title,
-    category: document.getElementById('proj-category').value,
-    description: document.getElementById('proj-description').value.trim(),
-    image_url: document.getElementById('proj-image-url').value,
-    thumbnail_url: document.getElementById('proj-image-url').value,
-    client_name: document.getElementById('proj-client').value.trim(),
+    category:     document.getElementById('proj-category').value,
+    description:  document.getElementById('proj-description').value.trim(),
+    image_url:    coverUrl,
+    thumbnail_url: coverUrl,
+    client_name:  document.getElementById('proj-client').value.trim(),
     project_year: document.getElementById('proj-year').value.trim(),
     deliverables: document.getElementById('proj-deliverables').value.trim(),
-    project_url: document.getElementById('proj-url').value.trim(),
-    video_url: (document.getElementById('proj-video-url').value.trim()
-              || document.getElementById('proj-video').value.trim()),
-    featured: document.getElementById('proj-featured').checked,
-    // Full media collections uploaded this session
-    media_urls: [
-      ...collectedImageUrls.map(m => ({ url: m.url, key: m.key, media_type: 'image' })),
-      ...collectedVideoUrls.map(m => ({ url: m.url, key: m.key, media_type: 'video', mime_type: m.mime })),
-    ],
+    project_url:  document.getElementById('proj-url').value.trim(),
+    video_url:    directVideoUrl || embedLink || '',
+    featured:     document.getElementById('proj-featured').checked,
+    // Full ordered media array for the project_media table
+    media_urls: mediaItems.map((m, i) => ({
+      url:        m.url,
+      key:        m.key,
+      media_type: m.media_type,
+      mime_type:  m.mime || null,
+      sort_order: i,
+      is_thumbnail: i === thumbnailIndex && m.media_type !== 'video',
+      id:         m.id || null,
+    })),
   };
 
   const btn = document.getElementById('save-project-btn');
   btn.textContent = 'Saving...';
   btn.disabled = true;
+  statusEl.style.display = 'none';
 
   try {
     const url = id ? `${API}/api/projects/${id}` : `${API}/api/projects`;
@@ -1203,6 +1296,8 @@ async function deleteProject(id) {
 function handleFileSelect(input) {
   const files = input.files ? Array.from(input.files) : [input];
   if (!files.length) return;
+  // Reset the input so the same file can be re-selected
+  input.value = '';
   uploadFilesSequentially(files, 'image');
 }
 
@@ -1210,6 +1305,7 @@ function handleFileSelect(input) {
 function handleVideoFileSelect(input) {
   const files = input.files ? Array.from(input.files) : [input];
   if (!files.length) return;
+  input.value = '';
   uploadFilesSequentially(files, 'video');
 }
 
@@ -1222,7 +1318,8 @@ function xhrUpload(file, onProgress) {
 
     const xhr = new XMLHttpRequest();
     xhr.open('POST', `${API}/api/upload`);
-    xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+    const _tok = localStorage.getItem('axd_token') || token;
+    xhr.setRequestHeader('Authorization', `Bearer ${_tok}`);
 
     xhr.upload.addEventListener('progress', e => {
       if (e.lengthComputable) {
@@ -1237,6 +1334,8 @@ function xhrUpload(file, onProgress) {
       if (xhr.status >= 200 && xhr.status < 300) {
         onProgress(100);
         resolve(data);
+      } else if (xhr.status === 401) {
+        reject(new Error('Session expired. Please re-login and try again.'));
       } else {
         reject(new Error(data.error || `Upload failed (HTTP ${xhr.status})`));
       }
@@ -1249,52 +1348,54 @@ function xhrUpload(file, onProgress) {
   });
 }
 
-// Upload multiple files one after another, showing progress per file
+// Upload multiple files one after another, updating mediaItems + grid
 async function uploadFilesSequentially(files, type) {
-  const isVideo   = type === 'video';
-  const statusEl  = document.getElementById(isVideo ? 'video-upload-status' : 'upload-status');
-  const preview   = document.getElementById(isVideo ? 'video-upload-preview' : 'upload-preview');
+  const isVideo      = type === 'video';
+  const statusEl     = document.getElementById(isVideo ? 'video-upload-status' : 'upload-status');
   const progressWrap = document.getElementById(isVideo ? 'video-upload-progress' : 'upload-progress');
   const progressBar  = document.getElementById(isVideo ? 'video-upload-bar' : 'upload-bar');
 
-  preview.style.display = 'block';
   progressWrap.style.display = 'block';
 
-  const results = [];
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
     statusEl.style.color = 'var(--text3)';
-    statusEl.textContent = `Uploading ${i + 1} of ${files.length}: ${file.name} (${(file.size/1024/1024).toFixed(1)}MB)…`;
+    statusEl.textContent = `Uploading ${i + 1} of ${files.length}: ${file.name} (${(file.size/1024/1024).toFixed(1)} MB)…`;
     progressBar.style.width = '2%';
     progressBar.style.transition = 'width 0.3s ease';
 
     try {
       const data = await xhrUpload(file, pct => { progressBar.style.width = pct + '%'; });
       progressBar.style.width = '100%';
-      results.push({ url: data.url, key: data.key, file });
 
-      if (isVideo) {
-        // Track in collected array
-        collectedVideoUrls.push({ url: data.url, key: data.key, mime: file.type });
-        // Last video URL populates hidden field (legacy fallback)
-        document.getElementById('proj-video-url').value = data.url;
-        preview.innerHTML += `<div style="margin-bottom:0.5rem">
-          <video controls preload="metadata" style="width:100%;border-radius:8px;max-height:160px;background:#000">
-            <source src="${data.url}" type="${file.type}">
-          </video>
-          <p style="font-size:0.72rem;color:var(--text3);margin-top:0.25rem">✓ ${file.name}</p>
-        </div>`;
-      } else {
-        // Track in collected array
-        collectedImageUrls.push({ url: data.url, key: data.key });
-        // First image URL populates hidden field (cover/legacy fallback)
+      const newItem = {
+        url:          data.url,
+        key:          data.key || null,
+        media_type:   isVideo ? 'video' : 'image',
+        mime:         file.type || (isVideo ? 'video/mp4' : null),
+        is_thumbnail: false,
+        sort_order:   mediaItems.length,
+        id:           null
+      };
+      mediaItems.push(newItem);
+
+      // First image becomes cover automatically
+      if (!isVideo) {
+        const firstImgIdx = mediaItems.findIndex(m => m.media_type !== 'video');
+        if (thumbnailIndex === 0 || mediaItems[thumbnailIndex]?.media_type === 'video') {
+          thumbnailIndex = firstImgIdx;
+        }
+        // Also set legacy hidden field
         if (!document.getElementById('proj-image-url').value) {
           document.getElementById('proj-image-url').value = data.url;
         }
-        preview.innerHTML += `<img src="${data.url}" alt="${file.name}" style="width:72px;height:54px;object-fit:cover;border-radius:6px;margin:0 4px 4px 0;border:1px solid var(--border)">`;
+      } else {
+        // Legacy hidden field for video
+        document.getElementById('proj-video-url').value = data.url;
       }
 
-      if (i < files.length - 1) await new Promise(r => setTimeout(r, 300));
+      renderMediaGrid();
+      if (i < files.length - 1) await new Promise(r => setTimeout(r, 200));
 
     } catch (err) {
       statusEl.style.color = '#f87171';
@@ -1305,8 +1406,8 @@ async function uploadFilesSequentially(files, type) {
   }
 
   statusEl.style.color = '#4ade80';
-  statusEl.textContent = `✓ ${results.length} file${results.length !== 1 ? 's' : ''} uploaded successfully.`;
-  setTimeout(() => { progressWrap.style.display = 'none'; progressBar.style.width = '0'; }, 1500);
+  statusEl.textContent = `✓ ${files.length} file${files.length !== 1 ? 's' : ''} added to gallery.`;
+  setTimeout(() => { progressWrap.style.display = 'none'; progressBar.style.width = '0'; statusEl.textContent = ''; }, 2500);
 }
 
 async function uploadVideoFile(file) {
