@@ -822,8 +822,11 @@ tr:hover td{background:rgba(255,255,255,0.02)}
 
 <script>
 // ── STATE ──────────────────────────────────────────────────────
-let token = localStorage.getItem('axd_token') || '';
 let adminEmail = localStorage.getItem('axd_email') || '';
+
+// Always read token fresh from localStorage to avoid stale in-memory value after expiry
+function getToken() { return localStorage.getItem('axd_token') || ''; }
+let token = getToken();
 let allProjects = [];
 let allInquiries = [];
 let pendingDeleteId = null;
@@ -905,7 +908,7 @@ async function doLogin() {
     if (!res.ok) throw new Error(data.error || 'Login failed.');
     token = data.token;
     adminEmail = data.admin.email;
-    localStorage.setItem('axd_token', token);
+    localStorage.setItem('axd_token', data.token);
     localStorage.setItem('axd_email', adminEmail);
     showApp();
   } catch (err) {
@@ -1318,8 +1321,7 @@ function xhrUpload(file, onProgress) {
 
     const xhr = new XMLHttpRequest();
     xhr.open('POST', `${API}/api/upload`);
-    const _tok = localStorage.getItem('axd_token') || token;
-    xhr.setRequestHeader('Authorization', `Bearer ${_tok}`);
+    xhr.setRequestHeader('Authorization', `Bearer ${getToken()}`);
 
     xhr.upload.addEventListener('progress', e => {
       if (e.lengthComputable) {
@@ -1431,11 +1433,12 @@ async function uploadVideoFile(file) {
     progressBar.style.width = '60%';
     const res = await fetch(`${API}/api/upload`, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Authorization: `Bearer ${getToken()}` },
       body: formData
     });
     progressBar.style.width = '100%';
     const data = await res.json();
+    if (res.status === 401) throw new Error('Session expired. Please re-login and try again.');
     if (!res.ok) throw new Error(data.error || 'Video upload failed.');
 
     // Store the R2 URL in the hidden field
@@ -1475,11 +1478,12 @@ async function uploadImage(file) {
     progressBar.style.width = '60%';
     const res = await fetch(`${API}/api/upload`, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Authorization: `Bearer ${getToken()}` },
       body: formData
     });
     progressBar.style.width = '100%';
     const data = await res.json();
+    if (res.status === 401) throw new Error('Session expired. Please re-login and try again.');
     if (!res.ok) throw new Error(data.error || 'Upload failed.');
     document.getElementById('proj-image-url').value = data.url;
     preview.innerHTML = `<img src="${data.url}" alt="preview">`;
@@ -1714,11 +1718,12 @@ async function uploadImageTo(file, progressWrapId, progressBarId, previewId, url
     progressBar.style.width = '60%';
     const res = await fetch(`${API}/api/upload`, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Authorization: `Bearer ${getToken()}` },
       body: formData
     });
     progressBar.style.width = '100%';
     const data = await res.json();
+    if (res.status === 401) throw new Error('Session expired. Please re-login and try again.');
     if (!res.ok) throw new Error(data.error || 'Upload failed.');
     document.getElementById(urlInputId).value = data.url;
     preview.innerHTML = `<img src="${data.url}" alt="preview" style="max-height:160px;object-fit:contain;">`;
